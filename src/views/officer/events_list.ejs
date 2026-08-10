@@ -1,0 +1,25 @@
+<%- include('../partials/header') %>
+
+<h1 class="h3 mb-3">Events</h1>
+
+<div class="list-group">
+  <% events.forEach(function(e) { %>
+    <div class="list-group-item d-flex flex-wrap gap-2 justify-content-between align-items-center">
+      <span>
+        <strong><%= e.name %></strong>
+        <span class="text-muted"> &middot; <%= e.eventDate.toDateString() %> &middot; <%= e.type %></span>
+      </span>
+      <span class="d-flex flex-wrap gap-2">
+        <a href="/officer/events/<%= e.id %>/attendance" class="btn btn-sm btn-primary">Mark Student Attendance</a>
+        <% if (currentUser.role === 'nstp') { %>
+          <a href="/officer/events/<%= e.id %>/faculty-attendance" class="btn btn-sm btn-outline-primary">Mark Faculty &amp; Staff</a>
+        <% } %>
+      </span>
+    </div>
+  <% }); %>
+  <% if (events.length === 0) { %>
+    <p class="text-muted">No events yet.</p>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,229 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  ssg
+  nstp
+}
+
+enum EventType {
+  flag_ceremony
+  assembly
+  other
+}
+
+enum AttendanceStatus {
+  present
+  absent
+  late
+  excused
+}
+
+enum OrgRole {
+  ssg
+  nstp
+}
+
+enum BudgetEntryType {
+  income
+  expense
+}
+
+enum FineStatus {
+  unpaid
+  paid
+}
+
+model User {
+  id                 Int               @id @default(autoincrement())
+  username           String            @unique
+  email              String?           @unique
+  passwordHash       String
+  role               Role
+  nickname           String?
+  avatarPath         String?
+  createdAt          DateTime          @default(now())
+  createdEvents      Event[]           @relation("EventCreatedBy")
+  attendanceChecks   AttendanceCheck[] @relation("CheckedBy")
+  createdOfficers    User[]            @relation("OfficerCreatedBy")
+  createdBy          User?             @relation("OfficerCreatedBy", fields: [createdById], references: [id])
+  createdById        Int?
+  budgetEntries      BudgetEntry[]     @relation("BudgetRecordedBy")
+  finesCollected     Fine[]            @relation("FinePaidBy")
+  facultyChecks      FacultyAttendanceCheck[] @relation("FacultyCheckedBy")
+  createdOrganizations Organization[]  @relation("OrgCreatedBy")
+
+  @@map("users")
+}
+
+model Student {
+  id                 Int               @id @default(autoincrement())
+  studentNumber      String            @unique
+  lastName           String
+  firstName          String
+  middleName         String?
+  course             String
+  yearLevel          String
+  section             String
+  email              String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  attendanceChecks   AttendanceCheck[]
+  fines              Fine[]
+  organizationMemberships OrganizationMember[]
+
+  @@map("students")
+}
+
+model Organization {
+  id            Int                  @id @default(autoincrement())
+  name          String               @unique
+  description   String?
+  createdBy     User                 @relation("OrgCreatedBy", fields: [createdById], references: [id])
+  createdById   Int
+  createdAt     DateTime             @default(now())
+  members       OrganizationMember[]
+  budgetEntries BudgetEntry[]
+
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  id             Int          @id @default(autoincrement())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId Int
+  student        Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId      Int
+  addedAt        DateTime     @default(now())
+
+  @@unique([organizationId, studentId])
+  @@map("organization_members")
+}
+
+model Event {
+  id                 Int               @id @default(autoincrement())
+  name               String
+  type               EventType         @default(other)
+  eventDate          DateTime
+  requiresSsg        Boolean           @default(true)
+  requiresNstp       Boolean           @default(true)
+  morningStart       DateTime?         @db.Time
+  morningCutoff      DateTime?         @db.Time
+  afternoonStart     DateTime?         @db.Time
+  afternoonCutoff    DateTime?         @db.Time
+  createdBy          User              @relation("EventCreatedBy", fields: [createdById], references: [id])
+  createdById        Int
+  createdAt          DateTime          @default(now())
+  attendanceChecks   AttendanceCheck[]
+  budgetEntries      BudgetEntry[]
+  fines              Fine[]
+  facultyChecks      FacultyAttendanceCheck[]
+
+  @@map("events")
+}
+
+model FacultyStaff {
+  id                Int                      @id @default(autoincrement())
+  lastName          String
+  firstName         String
+  middleName        String?
+  department        String
+  position          String?
+  email             String?
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+  attendanceChecks  FacultyAttendanceCheck[]
+
+  @@map("faculty_staff")
+}
+
+model FacultyAttendanceCheck {
+  id             Int              @id @default(autoincrement())
+  event          Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId        Int
+  facultyStaff   FacultyStaff     @relation(fields: [facultyStaffId], references: [id], onDelete: Cascade)
+  facultyStaffId Int
+  status         AttendanceStatus
+  checkedBy      User             @relation("FacultyCheckedBy", fields: [checkedById], references: [id])
+  checkedById    Int
+  checkedAt      DateTime         @default(now()) @updatedAt
+
+  @@unique([eventId, facultyStaffId])
+  @@map("faculty_attendance_checks")
+}
+
+model Settings {
+  id                  Int      @id @default(1)
+  systemName          String   @default("CMC SAO")
+  logoPath            String?
+  backgroundImagePath String?
+  absentFee           Decimal  @default(0) @db.Decimal(10, 2)
+  lateFee             Decimal  @default(0) @db.Decimal(10, 2)
+  updatedAt           DateTime @updatedAt
+
+  @@map("settings")
+}
+
+model BudgetEntry {
+  id             Int             @id @default(autoincrement())
+  orgRole        OrgRole?
+  organization   Organization?   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId Int?
+  type           BudgetEntryType
+  category       String
+  description    String
+  amount         Decimal         @db.Decimal(10, 2)
+  entryDate      DateTime
+  event          Event?          @relation(fields: [eventId], references: [id])
+  eventId        Int?
+  recordedBy     User            @relation("BudgetRecordedBy", fields: [recordedById], references: [id])
+  recordedById   Int
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@map("budget_entries")
+}
+
+model AttendanceCheck {
+  id           Int               @id @default(autoincrement())
+  event        Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId      Int
+  student      Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId    Int
+  officerRole  Role
+  status       AttendanceStatus
+  checkedBy    User              @relation("CheckedBy", fields: [checkedById], references: [id])
+  checkedById  Int
+  checkedAt    DateTime          @default(now()) @updatedAt
+  fine         Fine?
+
+  @@unique([eventId, studentId, officerRole])
+  @@map("attendance_checks")
+}
+
+model Fine {
+  id                Int              @id @default(autoincrement())
+  attendanceCheck   AttendanceCheck  @relation(fields: [attendanceCheckId], references: [id], onDelete: Cascade)
+  attendanceCheckId Int              @unique
+  student           Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId         Int
+  event             Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId           Int
+  orgRole           OrgRole
+  reason            AttendanceStatus
+  amount            Decimal          @db.Decimal(10, 2)
+  status            FineStatus       @default(unpaid)
+  paidAt            DateTime?
+  paidBy            User?            @relation("FinePaidBy", fields: [paidById], references: [id])
+  paidById          Int?
+  createdAt         DateTime         @default(now())
+
+  @@map("fines")
+}

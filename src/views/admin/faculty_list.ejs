@@ -1,0 +1,56 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Faculty &amp; Staff</h1>
+  <a href="/admin/faculty/new" class="btn btn-primary btn-sm">Add Faculty/Staff</a>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-6">
+    <input type="text" name="q" class="form-control" placeholder="Search by name or department..." value="<%= q %>">
+  </div>
+  <div class="col-md-4">
+    <select name="department" class="form-select" onchange="this.form.submit()">
+      <option value="">All Departments</option>
+      <% filterOptions.departments.forEach(function(d) { %>
+        <option value="<%= d %>" <%= department === d ? 'selected' : '' %>><%= d %></option>
+      <% }); %>
+    </select>
+  </div>
+  <div class="col-md-2">
+    <button class="btn btn-outline-secondary w-100" type="submit">Go</button>
+  </div>
+  <% if (q || department) { %>
+    <div class="col-12">
+      <a href="/admin/faculty" class="small">Clear filters</a>
+    </div>
+  <% } %>
+</form>
+
+<div class="table-responsive">
+  <table class="table table-sm table-striped bg-white">
+    <thead>
+      <tr><th>Name</th><th>Department</th><th>Position</th><th></th></tr>
+    </thead>
+    <tbody>
+      <% facultyList.forEach(function(f) { %>
+        <tr>
+          <td><%= f.lastName %>, <%= f.firstName %> <%= f.middleName || '' %></td>
+          <td><%= f.department %></td>
+          <td><%= f.position || '' %></td>
+          <td class="text-end">
+            <a href="/admin/faculty/<%= f.id %>/edit" class="btn btn-sm btn-outline-secondary">Edit</a>
+            <form method="post" action="/admin/faculty/<%= f.id %>/delete" class="d-inline" onsubmit="return confirm('Delete this faculty/staff member?');">
+              <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (facultyList.length === 0) { %>
+        <tr><td colspan="4" class="text-center text-muted">No faculty/staff found.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/footer') %>

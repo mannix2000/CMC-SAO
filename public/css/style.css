@@ -1,0 +1,79 @@
+.status-btn {
+  text-transform: capitalize;
+}
+
+.card-transparent {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.card-transparent .form-label {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.card-transparent h1,
+.card-transparent h2,
+.card-transparent h3,
+.card-transparent h4,
+.card-transparent h5,
+.card-transparent h6 {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.navbar-transparent {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.navbar-transparent .navbar-brand,
+.navbar-transparent .nav-link,
+.navbar-transparent .navbar-text {
+  color: #fff !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85), 0 0 2px rgba(0, 0, 0, 0.6);
+}
+
+.navbar-transparent .nav-link:hover,
+.navbar-transparent .nav-link:focus-visible {
+  color: #fff !important;
+}
+
+.navbar-transparent .navbar-toggler {
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.navbar .nav-link {
+  position: relative;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.navbar .nav-link::after {
+  content: '';
+  position: absolute;
+  left: 0.5rem;
+  right: 0.5rem;
+  bottom: -2px;
+  height: 2px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.2s ease;
+}
+
+.navbar .nav-link:hover,
+.navbar .nav-link:focus-visible {
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.navbar .nav-link:hover::after,
+.navbar .nav-link:focus-visible::after {
+  transform: scaleX(1);
+}

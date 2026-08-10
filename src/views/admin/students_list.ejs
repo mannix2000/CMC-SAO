@@ -1,0 +1,81 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Students</h1>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="/admin/students/template" class="btn btn-outline-secondary btn-sm">Download CSV Template</a>
+    <a href="/admin/students/import" class="btn btn-outline-primary btn-sm">Import Roster</a>
+    <a href="/admin/students/paste" class="btn btn-outline-primary btn-sm">Paste Students</a>
+    <a href="/admin/students/new" class="btn btn-primary btn-sm">Add Student</a>
+  </div>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-4">
+    <input type="text" name="q" class="form-control" placeholder="Search by number, name, course, section..." value="<%= q %>">
+  </div>
+  <div class="col-md-3">
+    <select name="course" class="form-select" onchange="this.form.submit()">
+      <option value="">All Programs</option>
+      <% filterOptions.courses.forEach(function(c) { %>
+        <option value="<%= c %>" <%= course === c ? 'selected' : '' %>><%= c %></option>
+      <% }); %>
+    </select>
+  </div>
+  <div class="col-md-2">
+    <select name="yearLevel" class="form-select" onchange="this.form.submit()">
+      <option value="">All Year Levels</option>
+      <% filterOptions.yearLevels.forEach(function(y) { %>
+        <option value="<%= y %>" <%= yearLevel === y ? 'selected' : '' %>><%= y %></option>
+      <% }); %>
+    </select>
+  </div>
+  <div class="col-md-2">
+    <select name="section" class="form-select" onchange="this.form.submit()">
+      <option value="">All Sections</option>
+      <% filterOptions.sections.forEach(function(s) { %>
+        <option value="<%= s %>" <%= section === s ? 'selected' : '' %>><%= s %></option>
+      <% }); %>
+    </select>
+  </div>
+  <div class="col-md-1">
+    <button class="btn btn-outline-secondary w-100" type="submit">Go</button>
+  </div>
+  <% if (q || course || yearLevel || section) { %>
+    <div class="col-12">
+      <a href="/admin/students" class="small">Clear filters</a>
+    </div>
+  <% } %>
+</form>
+
+<div class="table-responsive">
+  <table class="table table-sm table-striped bg-white">
+    <thead>
+      <tr>
+        <th>Student #</th><th>Name</th><th>Course</th><th>Year</th><th>Section</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% students.forEach(function(s) { %>
+        <tr>
+          <td><%= s.studentNumber %></td>
+          <td><%= s.lastName %>, <%= s.firstName %> <%= s.middleName || '' %></td>
+          <td><%= s.course %></td>
+          <td><%= s.yearLevel %></td>
+          <td><%= s.section %></td>
+          <td class="text-end">
+            <a href="/admin/students/<%= s.id %>/edit" class="btn btn-sm btn-outline-secondary">Edit</a>
+            <form method="post" action="/admin/students/<%= s.id %>/delete" class="d-inline" onsubmit="return confirm('Delete this student?');">
+              <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (students.length === 0) { %>
+        <tr><td colspan="6" class="text-center text-muted">No students found.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/footer') %>

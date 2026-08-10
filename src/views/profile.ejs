@@ -1,0 +1,98 @@
+<%- include('partials/header') %>
+
+<h1 class="h3 mb-3">My Profile</h1>
+
+<div class="row g-4">
+  <div class="col-md-6">
+    <div class="card card-body shadow-sm">
+      <h2 class="h5 mb-3">Account Info</h2>
+
+      <% if (saved) { %>
+        <div class="alert alert-success py-2">Profile updated.</div>
+      <% } %>
+      <% if (infoErrors && infoErrors.length) { %>
+        <div class="alert alert-danger">
+          <ul class="mb-0">
+            <% infoErrors.forEach(function(e) { %><li><%= e.msg %></li><% }); %>
+          </ul>
+        </div>
+      <% } %>
+
+      <form method="post" action="/profile" enctype="multipart/form-data">
+        <div class="mb-3">
+          <label class="form-label">Profile Picture</label>
+          <div class="d-flex align-items-center gap-3 mb-2">
+            <% if (user.avatarPath) { %>
+              <img src="<%= user.avatarPath %>" alt="" class="rounded-circle" style="width: 64px; height: 64px; object-fit: cover;">
+            <% } else { %>
+              <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white" style="width: 64px; height: 64px;">
+                <%= (user.nickname || user.username).charAt(0).toUpperCase() %>
+              </div>
+            <% } %>
+            <div>
+              <input type="file" name="avatar" accept="image/png,image/jpeg,image/webp,image/gif" class="form-control form-control-sm">
+              <% if (user.avatarPath) { %>
+                <div class="form-check mt-1">
+                  <input type="checkbox" name="removeAvatar" class="form-check-input" id="removeAvatar">
+                  <label class="form-check-label small" for="removeAvatar">Remove current picture</label>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Username</label>
+          <input type="text" name="username" class="form-control" value="<%= user.username %>" required minlength="3">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Nickname (optional)</label>
+          <input type="text" name="nickname" class="form-control" placeholder="Shown instead of your username around the app" value="<%= user.nickname || '' %>" maxlength="50">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Email</label>
+          <input type="email" name="email" class="form-control" value="<%= user.email || '' %>">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Role</label>
+          <input type="text" class="form-control" value="<%= user.role.toUpperCase() %>" disabled>
+        </div>
+        <button class="btn btn-primary" type="submit">Save Changes</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card card-body shadow-sm">
+      <h2 class="h5 mb-3">Change Password</h2>
+
+      <% if (passwordSaved) { %>
+        <div class="alert alert-success py-2">Password changed.</div>
+      <% } %>
+      <% if (passwordErrors && passwordErrors.length) { %>
+        <div class="alert alert-danger">
+          <ul class="mb-0">
+            <% passwordErrors.forEach(function(e) { %><li><%= e.msg %></li><% }); %>
+          </ul>
+        </div>
+      <% } %>
+
+      <form method="post" action="/profile/password">
+        <div class="mb-3">
+          <label class="form-label">Current Password</label>
+          <input type="password" name="currentPassword" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">New Password</label>
+          <input type="password" name="newPassword" class="form-control" minlength="8" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Confirm New Password</label>
+          <input type="password" name="confirmPassword" class="form-control" minlength="8" required>
+        </div>
+        <button class="btn btn-primary" type="submit">Change Password</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

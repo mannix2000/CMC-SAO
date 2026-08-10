@@ -1,0 +1,70 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Faculty &amp; Staff: <%= event.name %></h1>
+  <span class="text-muted"><%= event.eventDate.toDateString() %></span>
+</div>
+
+<p class="text-muted small">Faculty and staff attendance is not subject to fines.</p>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-6">
+    <input type="text" name="q" class="form-control" placeholder="Search by name or department..." value="<%= q %>">
+  </div>
+  <div class="col-md-4">
+    <select name="department" class="form-select" onchange="this.form.submit()">
+      <option value="">All Departments</option>
+      <% filterOptions.departments.forEach(function(d) { %>
+        <option value="<%= d %>" <%= department === d ? 'selected' : '' %>><%= d %></option>
+      <% }); %>
+    </select>
+  </div>
+  <div class="col-md-2">
+    <button class="btn btn-outline-secondary w-100" type="submit">Go</button>
+  </div>
+  <% if (q || department) { %>
+    <div class="col-12">
+      <a href="?" class="small">Clear filters</a>
+    </div>
+  <% } %>
+</form>
+
+<div id="attendance-summary" class="mb-2 text-muted small"></div>
+
+<div class="table-responsive">
+  <table class="table table-sm table-striped bg-white align-middle">
+    <thead>
+      <tr><th>Name</th><th>Department</th><th style="min-width: 320px;">Status</th></tr>
+    </thead>
+    <tbody id="attendance-rows">
+      <% facultyList.forEach(function(f) { %>
+        <% const currentStatus = statusByFacultyId.get(f.id) || ''; %>
+        <tr data-row-id="<%= f.id %>" data-status="<%= currentStatus %>">
+          <td><%= f.lastName %>, <%= f.firstName %></td>
+          <td><%= f.department %></td>
+          <td>
+            <div class="btn-group btn-group-sm status-group" role="group">
+              <% ['present', 'late', 'excused', 'absent'].forEach(function(st) { %>
+                <button type="button"
+                        class="btn btn-outline-secondary status-btn <%= currentStatus === st ? 'active' : '' %>"
+                        data-status="<%= st %>">
+                  <%= st %>
+                </button>
+              <% }); %>
+            </div>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (facultyList.length === 0) { %>
+        <tr><td colspan="3" class="text-center text-muted">No faculty/staff found.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  window.ATTENDANCE_POST_URL_BASE = '/officer/events/<%= event.id %>/faculty-attendance';
+</script>
+<script src="/js/attendance.js"></script>
+
+<%- include('../partials/footer') %>

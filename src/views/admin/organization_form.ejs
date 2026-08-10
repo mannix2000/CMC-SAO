@@ -1,0 +1,26 @@
+<%- include('../partials/header') %>
+
+<h1 class="h3 mb-3"><%= title %></h1>
+
+<% if (errors && errors.length) { %>
+  <div class="alert alert-danger">
+    <ul class="mb-0">
+      <% errors.forEach(function(e) { %><li><%= e.msg %></li><% }); %>
+    </ul>
+  </div>
+<% } %>
+
+<form method="post" action="<%= organization && organization.id ? '/admin/organizations/' + organization.id : '/admin/organizations' %>" class="card card-body shadow-sm">
+  <div class="mb-3">
+    <label class="form-label">Name</label>
+    <input type="text" name="name" class="form-control" placeholder="e.g. Math Club" value="<%= (organization && organization.name) || '' %>" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Description (optional)</label>
+    <textarea name="description" class="form-control" rows="3"><%= (organization && organization.description) || '' %></textarea>
+  </div>
+  <button class="btn btn-primary" type="submit">Save</button>
+  <a href="/admin/organizations" class="btn btn-outline-secondary">Cancel</a>
+</form>
+
+<%- include('../partials/footer') %>

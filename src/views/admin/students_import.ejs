@@ -1,0 +1,55 @@
+<%- include('../partials/header') %>
+
+<h1 class="h3 mb-3">Import Student Roster</h1>
+
+<p class="text-muted">
+  Upload a .csv or .xlsx file with columns: studentNumber, lastName, firstName, middleName (optional), course, yearLevel, section, email (optional).
+  <a href="/admin/students/template">Download a template</a>.
+</p>
+
+<form method="post" action="/admin/students/import" enctype="multipart/form-data" class="card card-body shadow-sm mb-4">
+  <div class="mb-3">
+    <input type="file" name="rosterFile" accept=".csv,.xlsx" class="form-control" required>
+  </div>
+  <button class="btn btn-primary" type="submit">Upload &amp; Preview</button>
+</form>
+
+<% if (parseErrors && parseErrors.length) { %>
+  <div class="alert alert-warning">
+    <strong>Some rows had problems and will be skipped:</strong>
+    <ul class="mb-0">
+      <% parseErrors.forEach(function(e) { %><li><%= e %></li><% }); %>
+    </ul>
+  </div>
+<% } %>
+
+<% if (preview) { %>
+  <div class="alert alert-info">
+    <%= preview.total %> valid row(s) ready to import.
+    <% if (preview.total > preview.rows.length) { %> Showing first <%= preview.rows.length %>.<% } %>
+  </div>
+
+  <div class="table-responsive mb-3">
+    <table class="table table-sm table-striped bg-white">
+      <thead>
+        <tr><th>Student #</th><th>Last Name</th><th>First Name</th><th>Course</th><th>Year</th><th>Section</th></tr>
+      </thead>
+      <tbody>
+        <% preview.rows.forEach(function(r) { %>
+          <tr>
+            <td><%= r.studentNumber %></td><td><%= r.lastName %></td><td><%= r.firstName %></td>
+            <td><%= r.course %></td><td><%= r.yearLevel %></td><td><%= r.section %></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if (preview.total > 0) { %>
+    <form method="post" action="/admin/students/import/confirm">
+      <button class="btn btn-success" type="submit">Confirm Import (<%= preview.total %> students)</button>
+    </form>
+  <% } %>
+<% } %>
+
+<%- include('../partials/footer') %>

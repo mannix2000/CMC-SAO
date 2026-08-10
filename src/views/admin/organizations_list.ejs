@@ -1,0 +1,36 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Organizations</h1>
+  <a href="/admin/organizations/new" class="btn btn-primary btn-sm">New Organization</a>
+</div>
+
+<div class="table-responsive">
+  <table class="table table-sm table-striped bg-white">
+    <thead>
+      <tr><th>Name</th><th>Description</th><th>Members</th><th></th></tr>
+    </thead>
+    <tbody>
+      <% organizations.forEach(function(o) { %>
+        <tr>
+          <td><%= o.name %></td>
+          <td><%= o.description || '' %></td>
+          <td><%= o._count.members %></td>
+          <td class="text-end">
+            <a href="/admin/organizations/<%= o.id %>/members" class="btn btn-sm btn-outline-primary">Members</a>
+            <a href="/admin/organizations/<%= o.id %>/budget" class="btn btn-sm btn-outline-primary">Budget</a>
+            <a href="/admin/organizations/<%= o.id %>/edit" class="btn btn-sm btn-outline-secondary">Edit</a>
+            <form method="post" action="/admin/organizations/<%= o.id %>/delete" class="d-inline" onsubmit="return confirm('Delete this organization? Members and budget entries will also be removed.');">
+              <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (organizations.length === 0) { %>
+        <tr><td colspan="4" class="text-center text-muted">No organizations yet.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/footer') %>

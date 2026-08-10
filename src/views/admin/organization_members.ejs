@@ -1,0 +1,84 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Members: <%= organization.name %></h1>
+  <a href="/admin/organizations" class="btn btn-outline-secondary btn-sm">Back to Organizations</a>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-4">
+    <input type="text" name="q" class="form-control" placeholder="Search by number, name, course, section..." value="<%= q %>">
+  </div>
+  <div class="col-md-3">
+    <select name="course" class="form-select" onchange="this.form.submit()">
+      <option value="">All Programs</option>
+      <% filterOptions.courses.forEach(function(c) { %>
+        <option value="<%= c %>" <%= course === c ? 'selected' : '' %>><%= c %></option>
+      <% }); %>
+    </select>
+  </div>
+  <div class="col-md-2">
+    <select name="yearLevel" class="form-select" onchange="this.form.submit()">
+      <option value="">All Year Levels</option>
+      <% filterOptions.yearLevels.forEach(function(y) { %>
+        <option value="<%= y %>" <%= yearLevel === y ? 'selected' : '' %>><%= y %></option>
+      <% }); %>
+    </select>
+  </div>
+  <div class="col-md-2">
+    <select name="section" class="form-select" onchange="this.form.submit()">
+      <option value="">All Sections</option>
+      <% filterOptions.sections.forEach(function(s) { %>
+        <option value="<%= s %>" <%= section === s ? 'selected' : '' %>><%= s %></option>
+      <% }); %>
+    </select>
+  </div>
+  <div class="col-md-1">
+    <button class="btn btn-outline-secondary w-100" type="submit">Go</button>
+  </div>
+  <% if (q || course || yearLevel || section) { %>
+    <div class="col-12">
+      <a href="/admin/organizations/<%= organization.id %>/members" class="small">Clear filters</a>
+    </div>
+  <% } %>
+</form>
+
+<p class="text-muted small">
+  Check the students who belong to this organization. Only students shown in this filtered list are affected when you save &mdash;
+  members outside the current search/filter stay untouched.
+</p>
+
+<form method="post" action="/admin/organizations/<%= organization.id %>/members">
+  <input type="hidden" name="candidateIds" value="<%= students.map(s => s.id).join(',') %>">
+
+  <div class="table-responsive mb-3">
+    <table class="table table-sm table-striped bg-white">
+      <thead>
+        <tr><th></th><th>Student #</th><th>Name</th><th>Course</th><th>Year</th><th>Section</th></tr>
+      </thead>
+      <tbody>
+        <% students.forEach(function(s) { %>
+          <tr>
+            <td>
+              <input type="checkbox" name="memberIds" value="<%= s.id %>" class="form-check-input" <%= memberIds.has(s.id) ? 'checked' : '' %>>
+            </td>
+            <td><%= s.studentNumber %></td>
+            <td><%= s.lastName %>, <%= s.firstName %></td>
+            <td><%= s.course %></td>
+            <td><%= s.yearLevel %></td>
+            <td><%= s.section %></td>
+          </tr>
+        <% }); %>
+        <% if (students.length === 0) { %>
+          <tr><td colspan="6" class="text-center text-muted">No students found.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if (students.length > 0) { %>
+    <button class="btn btn-primary" type="submit">Save Members</button>
+  <% } %>
+</form>
+
+<%- include('../partials/footer') %>

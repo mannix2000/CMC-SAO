@@ -1,0 +1,41 @@
+<%- include('../partials/header') %>
+
+<h1 class="h3 mb-3">Paste Students</h1>
+
+<p class="text-muted">
+  Copy a range straight out of Excel (ID, Last Name, First Name columns) and paste it below.
+  Program, Year Level, and Section apply to every pasted row &mdash; paste one section at a time.
+</p>
+
+<% if (parseErrors && parseErrors.length) { %>
+  <div class="alert alert-warning">
+    <ul class="mb-0">
+      <% parseErrors.forEach(function(e) { %><li><%= e %></li><% }); %>
+    </ul>
+  </div>
+<% } %>
+
+<form method="post" action="/admin/students/paste" class="card card-body shadow-sm">
+  <div class="row g-3 mb-3">
+    <div class="col-md-4">
+      <label class="form-label">Program</label>
+      <input type="text" name="course" class="form-control" placeholder="e.g. BSCS" value="<%= form.course || '' %>" required>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Year Level</label>
+      <input type="text" name="yearLevel" class="form-control" placeholder="e.g. 4" value="<%= form.yearLevel || '' %>" required>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Section</label>
+      <input type="text" name="section" class="form-control" placeholder="e.g. 4A" value="<%= form.section || '' %>" required>
+    </div>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Pasted Rows</label>
+    <textarea name="pasteData" class="form-control" rows="12" style="font-family: monospace;" placeholder="4A-001&#9;ACEDERA&#9;MARL FLORENCE&#10;4A-002&#9;AGAD&#9;IRENE" required><%= form.pasteData || '' %></textarea>
+  </div>
+  <button class="btn btn-primary" type="submit">Preview</button>
+  <a href="/admin/students" class="btn btn-outline-secondary">Cancel</a>
+</form>
+
+<%- include('../partials/footer') %>

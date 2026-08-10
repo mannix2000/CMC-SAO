@@ -1,0 +1,107 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0"><%= event.name %></h1>
+  <span class="text-muted"><%= event.eventDate.toDateString() %></span>
+</div>
+
+<% if (event.morningStart || event.morningCutoff || event.afternoonStart || event.afternoonCutoff) { %>
+  <div class="alert alert-secondary py-2 small">
+    <% if (event.morningStart || event.morningCutoff) { %>
+      <strong>Morning:</strong>
+      <%= event.morningStart ? formatTimeOfDay(event.morningStart) : '—' %>
+      <% if (event.morningCutoff) { %> (cutoff <%= formatTimeOfDay(event.morningCutoff) %>)<% } %>
+    <% } %>
+    <% if (event.afternoonStart || event.afternoonCutoff) { %>
+      <% if (event.morningStart || event.morningCutoff) { %> &middot; <% } %>
+      <strong>Afternoon:</strong>
+      <%= event.afternoonStart ? formatTimeOfDay(event.afternoonStart) : '—' %>
+      <% if (event.afternoonCutoff) { %> (cutoff <%= formatTimeOfDay(event.afternoonCutoff) %>)<% } %>
+    <% } %>
+  </div>
+<% } %>
+
+<% if (Number(settings.absentFee) > 0 || Number(settings.lateFee) > 0) { %>
+  <div class="alert alert-warning py-2 small">
+    Fines apply automatically: Absent = ₱<%= Number(settings.absentFee).toFixed(2) %>, Late = ₱<%= Number(settings.lateFee).toFixed(2) %>.
+  </div>
+<% } %>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-4">
+    <input type="text" name="q" class="form-control" placeholder="Search by number, name, course, section..." value="<%= q %>">
+  </div>
+  <div class="col-md-3">
+    <select name="course" class="form-select" onchange="this.form.submit()">
+      <option value="">All Programs</option>
+      <% filterOptions.courses.forEach(function(c) { %>
+        <option value="<%= c %>" <%= course === c ? 'selected' : '' %>><%= c %></option>
+      <% }); %>
+    </select>
+  </div>
+  <div class="col-md-2">
+    <select name="yearLevel" class="form-select" onchange="this.form.submit()">
+      <option value="">All Year Levels</option>
+      <% filterOptions.yearLevels.forEach(function(y) { %>
+        <option value="<%= y %>" <%= yearLevel === y ? 'selected' : '' %>><%= y %></option>
+      <% }); %>
+    </select>
+  </div>
+  <div class="col-md-2">
+    <select name="section" class="form-select" onchange="this.form.submit()">
+      <option value="">All Sections</option>
+      <% filterOptions.sections.forEach(function(s) { %>
+        <option value="<%= s %>" <%= section === s ? 'selected' : '' %>><%= s %></option>
+      <% }); %>
+    </select>
+  </div>
+  <div class="col-md-1">
+    <button class="btn btn-outline-secondary w-100" type="submit">Go</button>
+  </div>
+  <% if (q || course || yearLevel || section) { %>
+    <div class="col-12">
+      <a href="?" class="small">Clear filters</a>
+    </div>
+  <% } %>
+</form>
+
+<div id="attendance-summary" class="mb-2 text-muted small"></div>
+
+<div class="table-responsive">
+  <table class="table table-sm table-striped bg-white align-middle">
+    <thead>
+      <tr><th>Student #</th><th>Name</th><th>Course / Section</th><th style="min-width: 320px;">Status</th></tr>
+    </thead>
+    <tbody id="attendance-rows">
+      <% students.forEach(function(s) { %>
+        <% const currentStatus = statusByStudentId.get(s.id) || ''; %>
+        <tr data-row-id="<%= s.id %>" data-status="<%= currentStatus %>">
+          <td><%= s.studentNumber %></td>
+          <td><%= s.lastName %>, <%= s.firstName %></td>
+          <td><%= s.course %> / <%= s.section %></td>
+          <td>
+            <div class="btn-group btn-group-sm status-group" role="group">
+              <% ['present', 'late', 'excused', 'absent'].forEach(function(st) { %>
+                <button type="button"
+                        class="btn btn-outline-secondary status-btn <%= currentStatus === st ? 'active' : '' %>"
+                        data-status="<%= st %>">
+                  <%= st %>
+                </button>
+              <% }); %>
+            </div>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (students.length === 0) { %>
+        <tr><td colspan="4" class="text-center text-muted">No students found.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  window.ATTENDANCE_POST_URL_BASE = '/officer/events/<%= event.id %>/attendance';
+</script>
+<script src="/js/attendance.js"></script>
+
+<%- include('../partials/footer') %>

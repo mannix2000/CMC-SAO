@@ -1,0 +1,32 @@
+<%- include('partials/header') %>
+
+<div class="row justify-content-center">
+  <div class="col-md-5">
+    <div class="card card-transparent shadow-sm mt-5">
+      <div class="card-body p-4">
+        <div class="text-center mb-3">
+          <% if (settings.logoPath) { %>
+            <img src="<%= settings.logoPath %>" alt="" style="max-height: 56px;" class="mb-2">
+          <% } %>
+          <h1 class="h4 mb-0"><%= settings.systemName %></h1>
+        </div>
+        <% if (error) { %>
+          <div class="alert alert-danger py-2"><%= error %></div>
+        <% } %>
+        <form method="post" action="/login">
+          <div class="mb-3">
+            <label class="form-label">Username</label>
+            <input type="text" class="form-control" name="username" required autofocus>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Password</label>
+            <input type="password" class="form-control" name="password" required>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Log In</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

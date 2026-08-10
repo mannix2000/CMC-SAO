@@ -1,0 +1,67 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Budget &amp; Expenses (<%= orgRole.toUpperCase() %>)</h1>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="/officer/budget/export" class="btn btn-outline-secondary btn-sm">Export CSV</a>
+    <a href="/officer/budget/new" class="btn btn-primary btn-sm">New Entry</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h6 text-muted">Total Income</h2>
+        <p class="h4 text-success mb-0">₱<%= summary.income.toFixed(2) %></p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h6 text-muted">Total Expenses</h2>
+        <p class="h4 text-danger mb-0">₱<%= summary.expense.toFixed(2) %></p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h6 text-muted">Balance</h2>
+        <p class="h4 mb-0 <%= summary.balance < 0 ? 'text-danger' : 'text-dark' %>">₱<%= summary.balance.toFixed(2) %></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="table-responsive">
+  <table class="table table-sm table-striped bg-white">
+    <thead>
+      <tr><th>Date</th><th>Type</th><th>Category</th><th>Description</th><th>Event</th><th class="text-end">Amount</th><th></th></tr>
+    </thead>
+    <tbody>
+      <% entries.forEach(function(e) { %>
+        <tr>
+          <td><%= e.entryDate.toISOString().slice(0, 10) %></td>
+          <td><span class="badge bg-<%= e.type === 'income' ? 'success' : 'danger' %>"><%= e.type %></span></td>
+          <td><%= e.category %></td>
+          <td><%= e.description %></td>
+          <td><%= e.event ? e.event.name : '' %></td>
+          <td class="text-end">₱<%= Number(e.amount).toFixed(2) %></td>
+          <td class="text-end">
+            <a href="/officer/budget/<%= e.id %>/edit" class="btn btn-sm btn-outline-secondary">Edit</a>
+            <form method="post" action="/officer/budget/<%= e.id %>/delete" class="d-inline" onsubmit="return confirm('Delete this entry?');">
+              <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (entries.length === 0) { %>
+        <tr><td colspan="7" class="text-center text-muted">No budget entries yet.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/footer') %>

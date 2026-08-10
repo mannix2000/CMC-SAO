@@ -1,0 +1,72 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Fines (<%= orgRole.toUpperCase() %>)</h1>
+  <a href="/officer/fines/export" class="btn btn-outline-secondary btn-sm">Export CSV</a>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h6 text-muted">Unpaid</h2>
+        <p class="h4 text-danger mb-0">₱<%= summary.unpaidTotal.toFixed(2) %> <span class="fs-6 text-muted">(<%= summary.unpaidCount %>)</span></p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h6 text-muted">Collected</h2>
+        <p class="h4 text-success mb-0">₱<%= summary.paidTotal.toFixed(2) %> <span class="fs-6 text-muted">(<%= summary.paidCount %>)</span></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="btn-group btn-group-sm mb-3" role="group">
+  <a href="/officer/fines" class="btn btn-outline-primary <%= !status ? 'active' : '' %>">All</a>
+  <a href="/officer/fines?status=unpaid" class="btn btn-outline-primary <%= status === 'unpaid' ? 'active' : '' %>">Unpaid</a>
+  <a href="/officer/fines?status=paid" class="btn btn-outline-primary <%= status === 'paid' ? 'active' : '' %>">Paid</a>
+</div>
+
+<div class="table-responsive">
+  <table class="table table-sm table-striped bg-white">
+    <thead>
+      <tr><th>Date</th><th>Student</th><th>Event</th><th>Reason</th><th class="text-end">Amount</th><th>Status</th><th></th></tr>
+    </thead>
+    <tbody>
+      <% fines.forEach(function(f) { %>
+        <tr>
+          <td><%= f.createdAt.toISOString().slice(0, 10) %></td>
+          <td><%= f.student.lastName %>, <%= f.student.firstName %> <span class="text-muted">(<%= f.student.studentNumber %>)</span></td>
+          <td><%= f.event.name %></td>
+          <td><span class="badge bg-secondary"><%= f.reason %></span></td>
+          <td class="text-end">₱<%= Number(f.amount).toFixed(2) %></td>
+          <td>
+            <span class="badge bg-<%= f.status === 'paid' ? 'success' : 'danger' %>"><%= f.status %></span>
+            <% if (f.status === 'paid' && f.paidBy) { %>
+              <div class="small text-muted">by <%= f.paidBy.username %></div>
+            <% } %>
+          </td>
+          <td class="text-end">
+            <% if (f.status === 'unpaid') { %>
+              <form method="post" action="/officer/fines/<%= f.id %>/pay" class="d-inline">
+                <button class="btn btn-sm btn-success" type="submit">Mark Paid</button>
+              </form>
+            <% } else { %>
+              <form method="post" action="/officer/fines/<%= f.id %>/unpay" class="d-inline">
+                <button class="btn btn-sm btn-outline-secondary" type="submit">Undo</button>
+              </form>
+            <% } %>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (fines.length === 0) { %>
+        <tr><td colspan="7" class="text-center text-muted">No fines.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/footer') %>

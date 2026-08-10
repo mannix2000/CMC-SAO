@@ -1,0 +1,43 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Events</h1>
+  <a href="/admin/events/new" class="btn btn-primary btn-sm">New Event</a>
+</div>
+
+<div class="table-responsive">
+  <table class="table table-sm table-striped bg-white">
+    <thead>
+      <tr><th>Name</th><th>Type</th><th>Date</th><th>Requires</th><th>Schedule</th><th></th></tr>
+    </thead>
+    <tbody>
+      <% events.forEach(function(e) { %>
+        <tr>
+          <td><%= e.name %></td>
+          <td><%= e.type %></td>
+          <td><%= e.eventDate.toDateString() %></td>
+          <td>
+            <% if (e.requiresSsg) { %><span class="badge bg-primary">SSG</span><% } %>
+            <% if (e.requiresNstp) { %><span class="badge bg-success">NSTP</span><% } %>
+          </td>
+          <td class="small text-muted">
+            <% if (e.morningStart || e.morningCutoff) { %>AM: <%= formatTimeOfDay(e.morningStart) %><% if (e.morningCutoff) { %> (cutoff <%= formatTimeOfDay(e.morningCutoff) %>)<% } %><br><% } %>
+            <% if (e.afternoonStart || e.afternoonCutoff) { %>PM: <%= formatTimeOfDay(e.afternoonStart) %><% if (e.afternoonCutoff) { %> (cutoff <%= formatTimeOfDay(e.afternoonCutoff) %>)<% } %><% } %>
+          </td>
+          <td class="text-end">
+            <a href="/admin/events/<%= e.id %>/report" class="btn btn-sm btn-outline-primary">Report</a>
+            <a href="/admin/events/<%= e.id %>/edit" class="btn btn-sm btn-outline-secondary">Edit</a>
+            <form method="post" action="/admin/events/<%= e.id %>/delete" class="d-inline" onsubmit="return confirm('Delete this event?');">
+              <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (events.length === 0) { %>
+        <tr><td colspan="6" class="text-center text-muted">No events yet.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/footer') %>

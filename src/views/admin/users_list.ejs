@@ -1,0 +1,55 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Officer Accounts</h1>
+  <a href="/admin/users/new" class="btn btn-primary btn-sm">New Account</a>
+</div>
+
+<div class="table-responsive">
+  <table class="table table-sm table-striped bg-white">
+    <thead>
+      <tr><th></th><th>Username</th><th>Nickname</th><th>Email</th><th>Role</th><th>Created</th><th></th></tr>
+    </thead>
+    <tbody>
+      <% users.forEach(function(u) { %>
+        <tr>
+          <td>
+            <% if (u.avatarPath) { %>
+              <img src="<%= u.avatarPath %>" alt="" class="rounded-circle" style="width: 28px; height: 28px; object-fit: cover;">
+            <% } else { %>
+              <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white small" style="width: 28px; height: 28px;">
+                <%= (u.nickname || u.username).charAt(0).toUpperCase() %>
+              </div>
+            <% } %>
+          </td>
+          <td><%= u.username %></td>
+          <td><%= u.nickname || '' %></td>
+          <td><%= u.email || '' %></td>
+          <td><span class="badge bg-secondary"><%= u.role.toUpperCase() %></span></td>
+          <td><%= u.createdAt.toDateString() %></td>
+          <td class="text-end">
+            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#reset-<%= u.id %>">Reset Password</button>
+            <% if (u.id !== currentUserId) { %>
+              <form method="post" action="/admin/users/<%= u.id %>/delete" class="d-inline" onsubmit="return confirm('Delete this account?');">
+                <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+              </form>
+            <% } %>
+          </td>
+        </tr>
+        <tr class="collapse" id="reset-<%= u.id %>">
+          <td colspan="7">
+            <form method="post" action="/admin/users/<%= u.id %>/reset-password" class="d-flex gap-2">
+              <input type="password" name="password" class="form-control form-control-sm" placeholder="New password (min 8 chars)" minlength="8" required style="max-width: 300px;">
+              <button class="btn btn-sm btn-primary" type="submit">Set Password</button>
+            </form>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (users.length === 0) { %>
+        <tr><td colspan="7" class="text-center text-muted">No accounts yet.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/footer') %>

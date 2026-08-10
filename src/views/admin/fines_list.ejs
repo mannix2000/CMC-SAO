@@ -1,0 +1,83 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Fines</h1>
+  <a href="/admin/fines/export<%= org ? '?org=' + org : '' %>" class="btn btn-outline-secondary btn-sm">Export CSV</a>
+</div>
+
+<div class="row g-3 mb-4">
+  <% ['ssg', 'nstp'].forEach(function(o) { %>
+    <div class="col-md-6">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h2 class="h6 text-muted"><%= o.toUpperCase() %></h2>
+          <div class="row text-center">
+            <div class="col-6">
+              <div class="small text-muted">Unpaid</div>
+              <div class="text-danger fw-bold">₱<%= summaries[o].unpaidTotal.toFixed(2) %> <span class="fs-6">(<%= summaries[o].unpaidCount %>)</span></div>
+            </div>
+            <div class="col-6">
+              <div class="small text-muted">Collected</div>
+              <div class="text-success fw-bold">₱<%= summaries[o].paidTotal.toFixed(2) %> <span class="fs-6">(<%= summaries[o].paidCount %>)</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% }); %>
+</div>
+
+<div class="d-flex flex-wrap gap-2 mb-3">
+  <div class="btn-group btn-group-sm" role="group">
+    <a href="/admin/fines<%= status ? '?status=' + status : '' %>" class="btn btn-outline-primary <%= !org ? 'active' : '' %>">All Orgs</a>
+    <a href="/admin/fines?org=ssg<%= status ? '&status=' + status : '' %>" class="btn btn-outline-primary <%= org === 'ssg' ? 'active' : '' %>">SSG</a>
+    <a href="/admin/fines?org=nstp<%= status ? '&status=' + status : '' %>" class="btn btn-outline-primary <%= org === 'nstp' ? 'active' : '' %>">NSTP</a>
+  </div>
+  <div class="btn-group btn-group-sm" role="group">
+    <a href="/admin/fines<%= org ? '?org=' + org : '' %>" class="btn btn-outline-secondary <%= !status ? 'active' : '' %>">All Statuses</a>
+    <a href="/admin/fines?status=unpaid<%= org ? '&org=' + org : '' %>" class="btn btn-outline-secondary <%= status === 'unpaid' ? 'active' : '' %>">Unpaid</a>
+    <a href="/admin/fines?status=paid<%= org ? '&org=' + org : '' %>" class="btn btn-outline-secondary <%= status === 'paid' ? 'active' : '' %>">Paid</a>
+  </div>
+</div>
+
+<div class="table-responsive">
+  <table class="table table-sm table-striped bg-white">
+    <thead>
+      <tr><th>Date</th><th>Org</th><th>Student</th><th>Event</th><th>Reason</th><th class="text-end">Amount</th><th>Status</th><th></th></tr>
+    </thead>
+    <tbody>
+      <% fines.forEach(function(f) { %>
+        <tr>
+          <td><%= f.createdAt.toISOString().slice(0, 10) %></td>
+          <td><span class="badge bg-secondary"><%= f.orgRole.toUpperCase() %></span></td>
+          <td><%= f.student.lastName %>, <%= f.student.firstName %> <span class="text-muted">(<%= f.student.studentNumber %>)</span></td>
+          <td><%= f.event.name %></td>
+          <td><span class="badge bg-secondary"><%= f.reason %></span></td>
+          <td class="text-end">₱<%= Number(f.amount).toFixed(2) %></td>
+          <td>
+            <span class="badge bg-<%= f.status === 'paid' ? 'success' : 'danger' %>"><%= f.status %></span>
+            <% if (f.status === 'paid' && f.paidBy) { %>
+              <div class="small text-muted">by <%= f.paidBy.username %></div>
+            <% } %>
+          </td>
+          <td class="text-end">
+            <% if (f.status === 'unpaid') { %>
+              <form method="post" action="/admin/fines/<%= f.id %>/pay" class="d-inline">
+                <button class="btn btn-sm btn-success" type="submit">Mark Paid</button>
+              </form>
+            <% } else { %>
+              <form method="post" action="/admin/fines/<%= f.id %>/unpay" class="d-inline">
+                <button class="btn btn-sm btn-outline-secondary" type="submit">Undo</button>
+              </form>
+            <% } %>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (fines.length === 0) { %>
+        <tr><td colspan="8" class="text-center text-muted">No fines.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/footer') %>

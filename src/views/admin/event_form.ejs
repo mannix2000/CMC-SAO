@@ -1,0 +1,95 @@
+<%- include('../partials/header') %>
+
+<h1 class="h3 mb-3"><%= title %></h1>
+
+<% if (errors && errors.length) { %>
+  <div class="alert alert-danger">
+    <ul class="mb-0">
+      <% errors.forEach(function(e) { %><li><%= e.msg %></li><% }); %>
+    </ul>
+  </div>
+<% } %>
+
+<%
+  let dateValue = '';
+  if (event && event.eventDate) {
+    const d = new Date(event.eventDate);
+    if (!isNaN(d)) {
+      dateValue = d.toISOString().slice(0, 16);
+    }
+  }
+%>
+
+<form method="post" action="<%= event && event.id ? '/admin/events/' + event.id : '/admin/events' %>" class="card card-body shadow-sm">
+  <div class="row g-3">
+    <div class="col-md-6">
+      <label class="form-label">Event Name</label>
+      <input type="text" name="name" class="form-control" value="<%= (event && event.name) || '' %>" required>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Type</label>
+      <select name="type" class="form-select">
+        <% ['flag_ceremony', 'assembly', 'other'].forEach(function(t) { %>
+          <option value="<%= t %>" <%= event && event.type === t ? 'selected' : '' %>><%= t %></option>
+        <% }); %>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Date &amp; Time</label>
+      <input type="datetime-local" name="eventDate" class="form-control" value="<%= dateValue %>" required>
+    </div>
+    <div class="col-md-6">
+      <div class="form-check">
+        <input type="checkbox" name="requiresSsg" class="form-check-input" id="requiresSsg" <%= !event || event.requiresSsg ? 'checked' : '' %>>
+        <label class="form-check-label" for="requiresSsg">Requires SSG check</label>
+      </div>
+      <div class="form-check">
+        <input type="checkbox" name="requiresNstp" class="form-check-input" id="requiresNstp" <%= !event || event.requiresNstp ? 'checked' : '' %>>
+        <label class="form-check-label" for="requiresNstp">Requires NSTP check</label>
+      </div>
+    </div>
+  </div>
+
+  <hr class="my-3">
+  <p class="text-muted small mb-2">Optional reference schedule shown to officers on the attendance page. Doesn't affect how attendance is recorded.</p>
+  <div class="row g-3">
+    <div class="col-md-3">
+      <label class="form-label">Morning Start</label>
+      <select name="morningStart" class="form-select">
+        <% timeOptions.forEach(function(o) { %>
+          <option value="<%= o.value %>" <%= o.value === morningStartValue ? 'selected' : '' %>><%= o.label %></option>
+        <% }); %>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Morning Cutoff</label>
+      <select name="morningCutoff" class="form-select">
+        <% timeOptions.forEach(function(o) { %>
+          <option value="<%= o.value %>" <%= o.value === morningCutoffValue ? 'selected' : '' %>><%= o.label %></option>
+        <% }); %>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Afternoon Start</label>
+      <select name="afternoonStart" class="form-select">
+        <% timeOptions.forEach(function(o) { %>
+          <option value="<%= o.value %>" <%= o.value === afternoonStartValue ? 'selected' : '' %>><%= o.label %></option>
+        <% }); %>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Afternoon Cutoff</label>
+      <select name="afternoonCutoff" class="form-select">
+        <% timeOptions.forEach(function(o) { %>
+          <option value="<%= o.value %>" <%= o.value === afternoonCutoffValue ? 'selected' : '' %>><%= o.label %></option>
+        <% }); %>
+      </select>
+    </div>
+  </div>
+  <div class="mt-3">
+    <button class="btn btn-primary" type="submit">Save</button>
+    <a href="/admin/events" class="btn btn-outline-secondary">Cancel</a>
+  </div>
+</form>
+
+<%- include('../partials/footer') %>

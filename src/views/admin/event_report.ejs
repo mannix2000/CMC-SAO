@@ -1,0 +1,72 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Report: <%= event.name %></h1>
+  <a href="/admin/events/<%= event.id %>/report/export" class="btn btn-outline-primary btn-sm">Export CSV</a>
+</div>
+
+<p class="text-muted"><%= event.eventDate.toDateString() %> &middot; <%= event.type %></p>
+
+<div class="table-responsive">
+  <table class="table table-sm table-striped bg-white">
+    <thead>
+      <tr><th>Student #</th><th>Name</th><th>Course</th><th>Section</th><th>SSG</th><th>NSTP</th><th>Overall</th></tr>
+    </thead>
+    <tbody>
+      <% students.forEach(function(s) { %>
+        <% const checks = checksByStudentId.get(s.id); %>
+        <% const overall = computeOverallStatus(event, checks); %>
+        <tr>
+          <td><%= s.studentNumber %></td>
+          <td><%= s.lastName %>, <%= s.firstName %></td>
+          <td><%= s.course %></td>
+          <td><%= s.section %></td>
+          <td><%= (checks && checks.ssg && checks.ssg.status) || 'unmarked' %></td>
+          <td><%= (checks && checks.nstp && checks.nstp.status) || 'unmarked' %></td>
+          <td>
+            <span class="badge bg-<%= overall === 'present' ? 'success' : overall === 'absent' ? 'danger' : 'secondary' %>">
+              <%= overall %>
+            </span>
+          </td>
+        </tr>
+      <% }); %>
+    </tbody>
+  </table>
+</div>
+
+<div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3 mt-4">
+  <h2 class="h4 mb-0">Faculty &amp; Staff Attendance</h2>
+  <a href="/admin/events/<%= event.id %>/report/faculty-export" class="btn btn-outline-primary btn-sm">Export CSV</a>
+</div>
+<p class="text-muted small">Checked by NSTP only; not subject to fines.</p>
+
+<div class="table-responsive">
+  <table class="table table-sm table-striped bg-white">
+    <thead>
+      <tr><th>Name</th><th>Department</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <% facultyList.forEach(function(f) { %>
+        <% const fCheck = facultyChecksById.get(f.id); %>
+        <tr>
+          <td><%= f.lastName %>, <%= f.firstName %></td>
+          <td><%= f.department %></td>
+          <td>
+            <% if (fCheck) { %>
+              <span class="badge bg-<%= fCheck.status === 'present' ? 'success' : fCheck.status === 'absent' ? 'danger' : 'secondary' %>">
+                <%= fCheck.status %>
+              </span>
+            <% } else { %>
+              <span class="badge bg-secondary">unmarked</span>
+            <% } %>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (facultyList.length === 0) { %>
+        <tr><td colspan="3" class="text-center text-muted">No faculty/staff on record.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/footer') %>

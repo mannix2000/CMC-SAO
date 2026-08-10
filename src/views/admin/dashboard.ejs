@@ -1,0 +1,35 @@
+<%- include('../partials/header') %>
+
+<h1 class="h3 mb-4">Admin Dashboard</h1>
+
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h6 text-muted">Students</h2>
+        <p class="display-6"><%= studentCount %></p>
+        <a href="/admin/students" class="btn btn-sm btn-outline-primary">Manage Students</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h6 text-muted">Events</h2>
+        <p class="display-6"><%= eventCount %></p>
+        <a href="/admin/events" class="btn btn-sm btn-outline-primary">Manage Events</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h6 text-muted">Officer Accounts</h2>
+        <p class="display-6"><%= officerCount %></p>
+        <a href="/admin/users" class="btn btn-sm btn-outline-primary">Manage Officers</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %> · <%= settings.systemName %></title>
+  <link href="/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/css/style.css" rel="stylesheet">
+</head>
+<body class="<%= settings.backgroundImagePath ? '' : 'bg-light' %>"
+  <% if (settings.backgroundImagePath) { %>
+  style="background-image: url('<%= settings.backgroundImagePath %>'); background-size: cover; background-position: center; background-attachment: fixed;"
+  <% } %>
+>
+<% if (typeof currentUser !== 'undefined' && currentUser) { %>
+<nav class="navbar navbar-expand-md navbar-dark navbar-transparent mb-4">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center" href="/">
+      <% if (settings.logoPath) { %>
+        <img src="<%= settings.logoPath %>" alt="" style="height: 28px;" class="me-2">
+      <% } %>
+      <%= settings.systemName %>
+    </a>
+    <div class="d-flex align-items-center order-md-3">
+      <div class="dropdown">
+        <a href="#" class="nav-link dropdown-toggle d-flex align-items-center" id="userMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <% if (currentUser.avatarPath) { %>
+            <img src="<%= currentUser.avatarPath %>" alt="" class="rounded-circle me-2" style="width: 28px; height: 28px; object-fit: cover;">
+          <% } %>
+          <%= currentUser.nickname || currentUser.username %> (<%= currentUser.role.toUpperCase() %>)
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+          <li><a class="dropdown-item" href="/profile">My Profile</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <form method="post" action="/logout">
+              <button class="dropdown-item" type="submit">Log Out</button>
+            </form>
+          </li>
+        </ul>
+      </div>
+      <button class="navbar-toggler ms-2" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+    </div>
+    <div class="collapse navbar-collapse order-md-2" id="navMain">
+      <ul class="navbar-nav me-auto">
+        <% if (currentUser.role === 'admin') { %>
+          <li class="nav-item"><a class="nav-link" href="/admin">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="/admin/students">Students</a></li>
+          <li class="nav-item"><a class="nav-link" href="/admin/faculty">Faculty &amp; Staff</a></li>
+          <li class="nav-item"><a class="nav-link" href="/admin/organizations">Organizations</a></li>
+          <li class="nav-item"><a class="nav-link" href="/admin/events">Events</a></li>
+          <li class="nav-item"><a class="nav-link" href="/admin/users">Officer Accounts</a></li>
+          <li class="nav-item"><a class="nav-link" href="/admin/budget">Budget</a></li>
+          <li class="nav-item"><a class="nav-link" href="/admin/fines">Fines</a></li>
+          <li class="nav-item"><a class="nav-link" href="/admin/settings">Settings</a></li>
+        <% } else { %>
+          <li class="nav-item"><a class="nav-link" href="/officer/events">Events</a></li>
+          <li class="nav-item"><a class="nav-link" href="/officer/budget">Budget</a></li>
+          <li class="nav-item"><a class="nav-link" href="/officer/fines">Fines</a></li>
+        <% } %>
+      </ul>
+    </div>
+  </div>
+</nav>
+<% } %>
+<div class="container pb-5">

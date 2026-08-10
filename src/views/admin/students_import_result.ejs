@@ -1,0 +1,21 @@
+<%- include('../partials/header') %>
+
+<h1 class="h3 mb-3">Import Complete</h1>
+
+<div class="alert alert-success">
+  Created <%= created %> new student(s), updated <%= updated %> existing student(s).
+</div>
+
+<% if (failures && failures.length) { %>
+  <div class="alert alert-danger">
+    <strong>Some rows failed:</strong>
+    <ul class="mb-0">
+      <% failures.forEach(function(f) { %><li><%= f %></li><% }); %>
+    </ul>
+  </div>
+<% } %>
+
+<a href="/admin/students" class="btn btn-primary">View Students</a>
+<a href="/admin/students/import" class="btn btn-outline-secondary">Import Another File</a>
+
+<%- include('../partials/footer') %>

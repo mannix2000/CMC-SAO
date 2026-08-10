@@ -1,0 +1,33 @@
+{
+  "name": "cmc-sao-attendance",
+  "version": "1.0.0",
+  "description": "School attendance system for flag ceremonies and events (Admin roster import, SSG/NSTP officer checking)",
+  "main": "src/app.js",
+  "scripts": {
+    "dev": "node --watch src/app.js",
+    "start": "node src/app.js",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:generate": "prisma generate",
+    "seed": "node prisma/seed.js"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@prisma/client": "^6.1.0",
+    "bcrypt": "^6.0.0",
+    "connect-pg-simple": "^10.0.0",
+    "csv-parse": "^5.6.0",
+    "dotenv": "^16.4.7",
+    "ejs": "^3.1.10",
+    "exceljs": "^4.4.0",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "express-validator": "^7.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^1.4.5-lts.1",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "bootstrap": "^5.3.8",
+    "prisma": "^6.1.0"
+  }
+}
