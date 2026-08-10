@@ -32,4 +32,26 @@ function buildStudentWhere({ q, course, yearLevel, section }) {
   return and.length ? { AND: and } : {};
 }
 
-module.exports = { getFilterOptions, buildStudentWhere };
+function nextStudentNumber(value) {
+  const match = value.match(/^(.*?)(\d+)$/);
+  if (!match) return `${value}-2`;
+  const [, prefix, digits] = match;
+  const next = String(Number(digits) + 1).padStart(digits.length, '0');
+  return `${prefix}${next}`;
+}
+
+/**
+ * Returns `desired` if free, otherwise bumps its trailing number (e.g. "1A-003" -> "1A-004")
+ * until it finds one that isn't already taken, so adding a student never blocks on a duplicate.
+ */
+async function resolveAvailableStudentNumber(desired) {
+  let candidate = desired;
+  for (let attempts = 0; attempts < 1000; attempts += 1) {
+    const existing = await prisma.student.findUnique({ where: { studentNumber: candidate }, select: { id: true } });
+    if (!existing) return candidate;
+    candidate = nextStudentNumber(candidate);
+  }
+  throw new Error('Could not find an available student number.');
+}
+
+module.exports = { getFilterOptions, buildStudentWhere, resolveAvailableStudentNumber };

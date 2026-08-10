@@ -10,6 +10,10 @@
   </div>
 </div>
 
+<% if (notice) { %>
+  <div class="alert alert-info py-2"><%= notice %></div>
+<% } %>
+
 <form method="get" class="row g-2 mb-3">
   <div class="col-md-4">
     <input type="text" name="q" class="form-control" placeholder="Search by number, name, course, section..." value="<%= q %>">
@@ -38,44 +42,77 @@
       <% }); %>
     </select>
   </div>
+  <div class="col-md-2">
+    <select name="sortBy" class="form-select" onchange="this.form.submit()">
+      <option value="">Sort by...</option>
+      <% Object.keys(sortOptions).forEach(function(key) { %>
+        <option value="<%= key %>" <%= sortBy === key ? 'selected' : '' %>><%= sortOptions[key].label %></option>
+      <% }); %>
+    </select>
+  </div>
   <div class="col-md-1">
     <button class="btn btn-outline-secondary w-100" type="submit">Go</button>
   </div>
-  <% if (q || course || yearLevel || section) { %>
+  <% if (q || course || yearLevel || section || sortBy) { %>
     <div class="col-12">
       <a href="/admin/students" class="small">Clear filters</a>
     </div>
   <% } %>
 </form>
 
-<div class="table-responsive">
-  <table class="table table-sm table-striped bg-white">
-    <thead>
-      <tr>
-        <th>Student #</th><th>Name</th><th>Course</th><th>Year</th><th>Section</th><th></th>
-      </tr>
-    </thead>
-    <tbody>
-      <% students.forEach(function(s) { %>
+<% if (!hasFilter) { %>
+  <div class="alert alert-light border text-center text-muted">
+    <%= totalCount %> student<%= totalCount === 1 ? '' : 's' %> on record.
+    Use search, a filter, or sort above to view the list.
+  </div>
+<% } else { %>
+  <form id="bulkDeleteForm" method="post" action="/admin/students/bulk-delete">
+    <input type="hidden" name="q" value="<%= q %>">
+    <input type="hidden" name="course" value="<%= course %>">
+    <input type="hidden" name="yearLevel" value="<%= yearLevel %>">
+    <input type="hidden" name="section" value="<%= section %>">
+    <input type="hidden" name="sortBy" value="<%= sortBy %>">
+  </form>
+
+  <% if (students.length > 0) { %>
+    <div class="d-flex justify-content-end mb-2">
+      <button type="submit" form="bulkDeleteForm" id="deleteSelectedBtn" class="btn btn-sm btn-outline-danger" disabled>Delete Selected</button>
+    </div>
+  <% } %>
+
+  <div class="table-responsive">
+    <table class="table table-sm table-striped bg-white">
+      <thead>
         <tr>
-          <td><%= s.studentNumber %></td>
-          <td><%= s.lastName %>, <%= s.firstName %> <%= s.middleName || '' %></td>
-          <td><%= s.course %></td>
-          <td><%= s.yearLevel %></td>
-          <td><%= s.section %></td>
-          <td class="text-end">
-            <a href="/admin/students/<%= s.id %>/edit" class="btn btn-sm btn-outline-secondary">Edit</a>
-            <form method="post" action="/admin/students/<%= s.id %>/delete" class="d-inline" onsubmit="return confirm('Delete this student?');">
-              <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
-            </form>
-          </td>
+          <th style="width: 2rem;"><input type="checkbox" class="form-check-input" id="selectAllStudents" aria-label="Select all students"></th>
+          <th>Student #</th><th>Name</th><th>Course</th><th>Year</th><th>Section</th><th></th>
         </tr>
-      <% }); %>
-      <% if (students.length === 0) { %>
-        <tr><td colspan="6" class="text-center text-muted">No students found.</td></tr>
-      <% } %>
-    </tbody>
-  </table>
-</div>
+      </thead>
+      <tbody>
+        <% students.forEach(function(s) { %>
+          <tr>
+            <td><input type="checkbox" class="form-check-input student-select" name="studentIds" value="<%= s.id %>" form="bulkDeleteForm" aria-label="Select <%= s.lastName %>, <%= s.firstName %>"></td>
+            <td><%= s.studentNumber %></td>
+            <td><%= s.lastName %>, <%= s.firstName %> <%= s.middleName || '' %></td>
+            <td><%= s.course %></td>
+            <td><%= s.yearLevel %></td>
+            <td><%= s.section %></td>
+            <td class="text-end">
+              <a href="/admin/students/<%= s.id %>/edit" class="btn btn-sm btn-outline-secondary">Edit</a>
+              <form method="post" action="/admin/students/<%= s.id %>/delete" class="d-inline" onsubmit="return confirm('Delete this student?');">
+                <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+              </form>
+            </td>
+          </tr>
+        <% }); %>
+        <% if (students.length === 0) { %>
+          <tr><td colspan="7" class="text-center text-muted">No students found.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+<% } %>
+
+<script src="/js/students_list.js"></script>
 
 <%- include('../partials/footer') %>

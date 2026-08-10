@@ -2,18 +2,13 @@ const { toCsv } = require('./csv');
 const { formatClockTime } = require('./timeOfDay');
 
 /**
- * Picks a time field (timeInAm/timeOutAm/timeInPm/timeOutPm) off whichever officer
- * check recorded it first, since either SSG or NSTP may have logged the time.
- */
-function pickCheckTime(checks, field) {
-  return checks?.ssg?.[field] || checks?.nstp?.[field] || null;
-}
-
-/**
  * Builds an attendance report CSV for an event.
  * students: Student[]
  * checksByStudentId: Map<studentId, { ssg?: AttendanceCheck, nstp?: AttendanceCheck }>
  * event: Event (with requiresSsg/requiresNstp)
+ *
+ * SSG and NSTP are kept in their own columns (never merged) so it's always
+ * clear which officer role recorded which status/time.
  */
 function buildAttendanceReportCsv(event, students, checksByStudentId) {
   const columns = [
@@ -23,14 +18,29 @@ function buildAttendanceReportCsv(event, students, checksByStudentId) {
     { label: 'Course', value: (s) => s.course },
     { label: 'Year Level', value: (s) => s.yearLevel },
     { label: 'Section', value: (s) => s.section },
-    { label: 'SSG Status', value: (s) => checksByStudentId.get(s.id)?.ssg?.status || 'unmarked' },
-    { label: 'NSTP Status', value: (s) => checksByStudentId.get(s.id)?.nstp?.status || 'unmarked' },
-    { label: 'Morning Time In', value: (s) => formatClockTime(pickCheckTime(checksByStudentId.get(s.id), 'timeInAm')) || '' },
-    { label: 'Morning Time Out', value: (s) => formatClockTime(pickCheckTime(checksByStudentId.get(s.id), 'timeOutAm')) || '' },
-    { label: 'Afternoon Time In', value: (s) => formatClockTime(pickCheckTime(checksByStudentId.get(s.id), 'timeInPm')) || '' },
-    { label: 'Afternoon Time Out', value: (s) => formatClockTime(pickCheckTime(checksByStudentId.get(s.id), 'timeOutPm')) || '' },
-    { label: 'Overall', value: (s) => computeOverallStatus(event, checksByStudentId.get(s.id)) },
   ];
+
+  if (event.requiresSsg) {
+    columns.push(
+      { label: 'SSG Status', value: (s) => checksByStudentId.get(s.id)?.ssg?.status || 'unmarked' },
+      { label: 'SSG Morning Time In', value: (s) => formatClockTime(checksByStudentId.get(s.id)?.ssg?.timeInAm) || '' },
+      { label: 'SSG Morning Time Out', value: (s) => formatClockTime(checksByStudentId.get(s.id)?.ssg?.timeOutAm) || '' },
+      { label: 'SSG Afternoon Time In', value: (s) => formatClockTime(checksByStudentId.get(s.id)?.ssg?.timeInPm) || '' },
+      { label: 'SSG Afternoon Time Out', value: (s) => formatClockTime(checksByStudentId.get(s.id)?.ssg?.timeOutPm) || '' }
+    );
+  }
+
+  if (event.requiresNstp) {
+    columns.push(
+      { label: 'NSTP Status', value: (s) => checksByStudentId.get(s.id)?.nstp?.status || 'unmarked' },
+      { label: 'NSTP Morning Time In', value: (s) => formatClockTime(checksByStudentId.get(s.id)?.nstp?.timeInAm) || '' },
+      { label: 'NSTP Morning Time Out', value: (s) => formatClockTime(checksByStudentId.get(s.id)?.nstp?.timeOutAm) || '' },
+      { label: 'NSTP Afternoon Time In', value: (s) => formatClockTime(checksByStudentId.get(s.id)?.nstp?.timeInPm) || '' },
+      { label: 'NSTP Afternoon Time Out', value: (s) => formatClockTime(checksByStudentId.get(s.id)?.nstp?.timeOutPm) || '' }
+    );
+  }
+
+  columns.push({ label: 'Overall', value: (s) => computeOverallStatus(event, checksByStudentId.get(s.id)) });
   return toCsv(students, columns);
 }
 

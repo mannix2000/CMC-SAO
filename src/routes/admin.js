@@ -10,7 +10,7 @@ const { parseRosterFile, parsePastedRows, REQUIRED_COLUMNS, OPTIONAL_COLUMNS } =
 const { buildAttendanceReportCsv, computeOverallStatus } = require('../services/reportExport');
 const { updateSettings } = require('../services/settings');
 const { getSummaries, getOrganizationSummary, listEntries, buildBudgetCsv } = require('../services/budget');
-const { getFilterOptions, buildStudentWhere } = require('../services/students');
+const { getFilterOptions, buildStudentWhere, resolveAvailableStudentNumber } = require('../services/students');
 const { listFines, getFineSummary, markPaid, markUnpaid, buildFinesCsv } = require('../services/fines');
 const { finalizeAttendanceForRoster } = require('../services/attendanceMarking');
 const { listOrganizations, getOrganization, syncMembers, listMemberStudentIds } = require('../services/organizations');
@@ -71,22 +71,47 @@ router.get('/', async (req, res) => {
 
 // ---------- Students ----------
 
+const STUDENT_SORT_OPTIONS = {
+  name: { label: 'Name', orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }] },
+  course: { label: 'Course', orderBy: [{ course: 'asc' }, { lastName: 'asc' }, { firstName: 'asc' }] },
+  yearLevel: { label: 'Year Level', orderBy: [{ yearLevel: 'asc' }, { lastName: 'asc' }, { firstName: 'asc' }] },
+  section: { label: 'Section', orderBy: [{ section: 'asc' }, { lastName: 'asc' }, { firstName: 'asc' }] },
+};
+
 router.get('/students', async (req, res) => {
   const q = (req.query.q || '').trim();
   const course = (req.query.course || '').trim();
   const yearLevel = (req.query.yearLevel || '').trim();
   const section = (req.query.section || '').trim();
+  const sortBy = STUDENT_SORT_OPTIONS[req.query.sortBy] ? req.query.sortBy : '';
+  const hasFilter = Boolean(q || course || yearLevel || section || sortBy);
 
-  const [students, filterOptions] = await Promise.all([
-    prisma.student.findMany({
-      where: buildStudentWhere({ q, course, yearLevel, section }),
-      orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
-      take: 500,
-    }),
+  const [students, filterOptions, totalCount] = await Promise.all([
+    hasFilter
+      ? prisma.student.findMany({
+          where: buildStudentWhere({ q, course, yearLevel, section }),
+          orderBy: STUDENT_SORT_OPTIONS[sortBy || 'name'].orderBy,
+          take: 500,
+        })
+      : Promise.resolve([]),
     getFilterOptions(),
+    prisma.student.count(),
   ]);
 
-  res.render('admin/students_list', { title: 'Students', students, q, course, yearLevel, section, filterOptions });
+  res.render('admin/students_list', {
+    title: 'Students',
+    students,
+    q,
+    course,
+    yearLevel,
+    section,
+    sortBy,
+    sortOptions: STUDENT_SORT_OPTIONS,
+    filterOptions,
+    hasFilter,
+    totalCount,
+    notice: req.query.notice || '',
+  });
 });
 
 router.get('/students/template', (req, res) => {
@@ -122,10 +147,14 @@ router.post(
     }
     const { studentNumber, lastName, firstName, middleName, course, yearLevel, section, email } = req.body;
     try {
+      const finalStudentNumber = await resolveAvailableStudentNumber(studentNumber);
       await prisma.student.create({
-        data: { studentNumber, lastName, firstName, middleName: middleName || null, course, yearLevel, section, email: email || null },
+        data: { studentNumber: finalStudentNumber, lastName, firstName, middleName: middleName || null, course, yearLevel, section, email: email || null },
       });
-      res.redirect('/admin/students');
+      const notice = finalStudentNumber !== studentNumber
+        ? `?notice=${encodeURIComponent(`"${studentNumber}" was already taken, so "${finalStudentNumber}" was assigned instead.`)}`
+        : '';
+      res.redirect(`/admin/students${notice}`);
     } catch (err) {
       const msg = err.code === 'P2002' ? 'A student with that student number already exists.' : 'Could not save student.';
       res.status(400).render('admin/student_form', { title: 'Add Student', student: req.body, errors: [{ msg }] });
@@ -219,6 +248,26 @@ router.get('/students/:id/edit', async (req, res) => {
   const student = await prisma.student.findUnique({ where: { id: Number(req.params.id) } });
   if (!student) return res.status(404).render('error', { title: 'Not Found', message: 'Student not found.' });
   res.render('admin/student_form', { title: 'Edit Student', student, errors: [] });
+});
+
+// Must be registered before POST /students/:id, otherwise the :id route
+// would treat "bulk-delete" as an id and swallow this request.
+router.post('/students/bulk-delete', async (req, res) => {
+  const rawIds = req.body.studentIds;
+  const ids = (Array.isArray(rawIds) ? rawIds : rawIds ? [rawIds] : [])
+    .map(Number)
+    .filter((n) => Number.isInteger(n));
+
+  if (ids.length > 0) {
+    await prisma.student.deleteMany({ where: { id: { in: ids } } }).catch(() => {});
+  }
+
+  const params = new URLSearchParams();
+  ['q', 'course', 'yearLevel', 'section', 'sortBy'].forEach((key) => {
+    if (req.body[key]) params.set(key, req.body[key]);
+  });
+  const qs = params.toString();
+  res.redirect(`/admin/students${qs ? `?${qs}` : ''}`);
 });
 
 router.post(
