@@ -12,13 +12,14 @@ const { updateSettings } = require('../services/settings');
 const { getSummaries, getOrganizationSummary, listEntries, buildBudgetCsv } = require('../services/budget');
 const { getFilterOptions, buildStudentWhere } = require('../services/students');
 const { listFines, getFineSummary, markPaid, markUnpaid, buildFinesCsv } = require('../services/fines');
+const { finalizeAttendanceForRoster } = require('../services/attendanceMarking');
 const { listOrganizations, getOrganization, syncMembers, listMemberStudentIds } = require('../services/organizations');
 const {
   getFilterOptions: getFacultyFilterOptions,
   buildFacultyWhere,
   buildFacultyReportCsv,
 } = require('../services/faculty');
-const { buildTimeOptions, timeOfDayToValue, parseTimeOfDay, formatTimeOfDay } = require('../services/timeOfDay');
+const { buildTimeOptions, timeOfDayToValue, parseTimeOfDay, formatTimeOfDay, formatClockTime } = require('../services/timeOfDay');
 
 const router = express.Router();
 router.use(requireRole('admin'));
@@ -689,10 +690,21 @@ router.post('/events/:id/delete', async (req, res) => {
   res.redirect('/admin/events');
 });
 
-async function loadReportData(eventId) {
+async function loadReportData(eventId, checkedById) {
   const event = await prisma.event.findUnique({ where: { id: eventId } });
   if (!event) return null;
   const students = await prisma.student.findMany({ orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }] });
+
+  const studentIds = students.map((s) => s.id);
+  await Promise.all([
+    event.requiresSsg
+      ? finalizeAttendanceForRoster({ event, officerRole: 'ssg', checkedById, studentIds })
+      : null,
+    event.requiresNstp
+      ? finalizeAttendanceForRoster({ event, officerRole: 'nstp', checkedById, studentIds })
+      : null,
+  ]);
+
   const checks = await prisma.attendanceCheck.findMany({ where: { eventId } });
   const checksByStudentId = new Map();
   for (const c of checks) {
@@ -709,13 +721,13 @@ async function loadReportData(eventId) {
 }
 
 router.get('/events/:id/report', async (req, res) => {
-  const data = await loadReportData(Number(req.params.id));
+  const data = await loadReportData(Number(req.params.id), req.session.user.id);
   if (!data) return res.status(404).render('error', { title: 'Not Found', message: 'Event not found.' });
-  res.render('admin/event_report', { title: `Report: ${data.event.name}`, ...data, computeOverallStatus });
+  res.render('admin/event_report', { title: `Report: ${data.event.name}`, ...data, computeOverallStatus, formatClockTime });
 });
 
 router.get('/events/:id/report/export', async (req, res) => {
-  const data = await loadReportData(Number(req.params.id));
+  const data = await loadReportData(Number(req.params.id), req.session.user.id);
   if (!data) return res.status(404).render('error', { title: 'Not Found', message: 'Event not found.' });
   const csv = buildAttendanceReportCsv(data.event, data.students, data.checksByStudentId);
   res.setHeader('Content-Type', 'text/csv');
@@ -896,6 +908,7 @@ router.get('/fines', async (req, res) => {
     fines,
     org,
     status,
+    formatClockTime,
   });
 });
 

@@ -1,6 +1,7 @@
 const prisma = require('../config/db');
 const { getSettings } = require('./settings');
 const { toCsv } = require('./csv');
+const { formatClockTime } = require('./timeOfDay');
 
 const FINABLE_STATUSES = ['absent', 'late'];
 
@@ -51,7 +52,7 @@ async function syncFineForCheck(check) {
 async function listFines({ orgRole, status } = {}) {
   return prisma.fine.findMany({
     where: { orgRole: orgRole || undefined, status: status || undefined },
-    include: { student: true, event: true, paidBy: true },
+    include: { student: true, event: true, paidBy: true, attendanceCheck: true },
     orderBy: [{ createdAt: 'desc' }],
   });
 }
@@ -91,6 +92,10 @@ function buildFinesCsv(fines) {
     { label: 'Student Name', value: (f) => `${f.student.lastName}, ${f.student.firstName}` },
     { label: 'Event', value: (f) => f.event.name },
     { label: 'Reason', value: (f) => f.reason },
+    { label: 'Morning Time In', value: (f) => formatClockTime(f.attendanceCheck?.timeInAm) || '' },
+    { label: 'Morning Time Out', value: (f) => formatClockTime(f.attendanceCheck?.timeOutAm) || '' },
+    { label: 'Afternoon Time In', value: (f) => formatClockTime(f.attendanceCheck?.timeInPm) || '' },
+    { label: 'Afternoon Time Out', value: (f) => formatClockTime(f.attendanceCheck?.timeOutPm) || '' },
     { label: 'Amount', value: (f) => Number(f.amount).toFixed(2) },
     { label: 'Status', value: (f) => f.status },
     { label: 'Paid By', value: (f) => f.paidBy?.username || '' },

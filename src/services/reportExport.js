@@ -1,4 +1,13 @@
 const { toCsv } = require('./csv');
+const { formatClockTime } = require('./timeOfDay');
+
+/**
+ * Picks a time field (timeInAm/timeOutAm/timeInPm/timeOutPm) off whichever officer
+ * check recorded it first, since either SSG or NSTP may have logged the time.
+ */
+function pickCheckTime(checks, field) {
+  return checks?.ssg?.[field] || checks?.nstp?.[field] || null;
+}
 
 /**
  * Builds an attendance report CSV for an event.
@@ -16,6 +25,10 @@ function buildAttendanceReportCsv(event, students, checksByStudentId) {
     { label: 'Section', value: (s) => s.section },
     { label: 'SSG Status', value: (s) => checksByStudentId.get(s.id)?.ssg?.status || 'unmarked' },
     { label: 'NSTP Status', value: (s) => checksByStudentId.get(s.id)?.nstp?.status || 'unmarked' },
+    { label: 'Morning Time In', value: (s) => formatClockTime(pickCheckTime(checksByStudentId.get(s.id), 'timeInAm')) || '' },
+    { label: 'Morning Time Out', value: (s) => formatClockTime(pickCheckTime(checksByStudentId.get(s.id), 'timeOutAm')) || '' },
+    { label: 'Afternoon Time In', value: (s) => formatClockTime(pickCheckTime(checksByStudentId.get(s.id), 'timeInPm')) || '' },
+    { label: 'Afternoon Time Out', value: (s) => formatClockTime(pickCheckTime(checksByStudentId.get(s.id), 'timeOutPm')) || '' },
     { label: 'Overall', value: (s) => computeOverallStatus(event, checksByStudentId.get(s.id)) },
   ];
   return toCsv(students, columns);

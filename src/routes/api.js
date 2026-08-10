@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const prisma = require('../config/db');
 const { requireApiAuth, requireApiRole } = require('../middleware/apiAuth');
 const { getFilterOptions, buildStudentWhere } = require('../services/students');
-const { markStudentAttendance, markAttendanceTime } = require('../services/attendanceMarking');
+const { markStudentAttendance, markAttendanceTime, finalizeAttendanceForRoster } = require('../services/attendanceMarking');
 
 const router = express.Router();
 
@@ -85,14 +85,23 @@ router.get('/events/:id/attendance', async (req, res) => {
   const event = await prisma.event.findUnique({ where: { id: eventId } });
   if (!event) return res.status(404).json({ error: 'Event not found' });
 
-  const [students, checks] = await Promise.all([
-    prisma.student.findMany({
-      where: buildStudentWhere({ q, course, yearLevel, section }),
-      orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
-      take: 500,
-    }),
-    prisma.attendanceCheck.findMany({ where: { eventId, officerRole } }),
-  ]);
+  const students = await prisma.student.findMany({
+    where: buildStudentWhere({ q, course, yearLevel, section }),
+    orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
+    take: 500,
+  });
+
+  const requiresThisOrg = officerRole === 'ssg' ? event.requiresSsg : event.requiresNstp;
+  if (requiresThisOrg) {
+    await finalizeAttendanceForRoster({
+      event,
+      officerRole,
+      checkedById: req.apiUser.id,
+      studentIds: students.map((s) => s.id),
+    });
+  }
+
+  const checks = await prisma.attendanceCheck.findMany({ where: { eventId, officerRole } });
   const checkByStudentId = new Map(checks.map((c) => [c.studentId, c]));
 
   res.json({
@@ -111,13 +120,18 @@ router.get('/events/:id/attendance', async (req, res) => {
   });
 });
 
-// POST /api/events/:id/attendance/:studentId  { status: "present" | "absent" | "late" | "excused" }
+// POST /api/events/:id/attendance/:studentId  { status: "excused" | null }
+// Present/Late/Absent are derived automatically from recorded times; the only manual
+// override is Excused (or clearing it, with status: null, back to automatic).
 router.post('/events/:id/attendance/:studentId', async (req, res) => {
+  const status = req.body.status === 'excused' ? 'excused' : req.body.status === null ? null : undefined;
+  if (status === undefined) return res.status(400).json({ error: 'Only excused (or clearing it) can be set manually' });
+
   const result = await markStudentAttendance({
     eventId: Number(req.params.id),
     studentId: Number(req.params.studentId),
     officerRole: req.apiUser.role,
-    status: req.body.status,
+    status,
     checkedById: req.apiUser.id,
   });
   if (result.error === 'invalid_status') return res.status(400).json({ error: result.message });
@@ -141,6 +155,7 @@ router.post('/events/:id/attendance/:studentId/time', async (req, res) => {
   const { check } = result;
   res.json({
     ok: true,
+    status: check.status,
     timeInAm: check.timeInAm,
     timeOutAm: check.timeOutAm,
     timeInPm: check.timeInPm,

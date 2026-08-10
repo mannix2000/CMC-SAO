@@ -10,12 +10,18 @@
 <div class="table-responsive">
   <table class="table table-sm table-striped bg-white">
     <thead>
-      <tr><th>Student #</th><th>Name</th><th>Course</th><th>Section</th><th>SSG</th><th>NSTP</th><th>Overall</th></tr>
+      <tr>
+        <th>Student #</th><th>Name</th><th>Course</th><th>Section</th>
+        <th>SSG</th><th>NSTP</th>
+        <th>Morning (In / Out)</th><th>Afternoon (In / Out)</th>
+        <th>Overall</th>
+      </tr>
     </thead>
     <tbody>
       <% students.forEach(function(s) { %>
         <% const checks = checksByStudentId.get(s.id); %>
         <% const overall = computeOverallStatus(event, checks); %>
+        <% const pick = function(field) { return (checks && checks.ssg && checks.ssg[field]) || (checks && checks.nstp && checks.nstp[field]) || null; }; %>
         <tr>
           <td><%= s.studentNumber %></td>
           <td><%= s.lastName %>, <%= s.firstName %></td>
@@ -23,6 +29,16 @@
           <td><%= s.section %></td>
           <td><%= (checks && checks.ssg && checks.ssg.status) || 'unmarked' %></td>
           <td><%= (checks && checks.nstp && checks.nstp.status) || 'unmarked' %></td>
+          <td class="small">
+            In: <%= pick('timeInAm') ? formatClockTime(pick('timeInAm')) : '—' %>
+            &middot;
+            Out: <%= pick('timeOutAm') ? formatClockTime(pick('timeOutAm')) : '—' %>
+          </td>
+          <td class="small">
+            In: <%= pick('timeInPm') ? formatClockTime(pick('timeInPm')) : '—' %>
+            &middot;
+            Out: <%= pick('timeOutPm') ? formatClockTime(pick('timeOutPm')) : '—' %>
+          </td>
           <td>
             <span class="badge bg-<%= overall === 'present' ? 'success' : overall === 'absent' ? 'danger' : 'secondary' %>">
               <%= overall %>

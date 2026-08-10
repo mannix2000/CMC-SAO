@@ -43,16 +43,31 @@
 <div class="table-responsive">
   <table class="table table-sm table-striped bg-white">
     <thead>
-      <tr><th>Date</th><th>Org</th><th>Student</th><th>Event</th><th>Reason</th><th class="text-end">Amount</th><th>Status</th><th></th></tr>
+      <tr>
+        <th>Date</th><th>Org</th><th>Student</th><th>Event</th><th>Reason</th>
+        <th>Morning (In / Out)</th><th>Afternoon (In / Out)</th>
+        <th class="text-end">Amount</th><th>Status</th><th></th>
+      </tr>
     </thead>
     <tbody>
       <% fines.forEach(function(f) { %>
+        <% const ac = f.attendanceCheck; %>
         <tr>
           <td><%= f.createdAt.toISOString().slice(0, 10) %></td>
           <td><span class="badge bg-secondary"><%= f.orgRole.toUpperCase() %></span></td>
           <td><%= f.student.lastName %>, <%= f.student.firstName %> <span class="text-muted">(<%= f.student.studentNumber %>)</span></td>
           <td><%= f.event.name %></td>
           <td><span class="badge bg-secondary"><%= f.reason %></span></td>
+          <td class="small">
+            In: <%= ac && ac.timeInAm ? formatClockTime(ac.timeInAm) : '—' %>
+            &middot;
+            Out: <%= ac && ac.timeOutAm ? formatClockTime(ac.timeOutAm) : '—' %>
+          </td>
+          <td class="small">
+            In: <%= ac && ac.timeInPm ? formatClockTime(ac.timeInPm) : '—' %>
+            &middot;
+            Out: <%= ac && ac.timeOutPm ? formatClockTime(ac.timeOutPm) : '—' %>
+          </td>
           <td class="text-end">₱<%= Number(f.amount).toFixed(2) %></td>
           <td>
             <span class="badge bg-<%= f.status === 'paid' ? 'success' : 'danger' %>"><%= f.status %></span>
@@ -74,7 +89,7 @@
         </tr>
       <% }); %>
       <% if (fines.length === 0) { %>
-        <tr><td colspan="8" class="text-center text-muted">No fines.</td></tr>
+        <tr><td colspan="10" class="text-center text-muted">No fines.</td></tr>
       <% } %>
     </tbody>
   </table>

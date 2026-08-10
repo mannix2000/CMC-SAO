@@ -76,7 +76,7 @@
         <th>Course / Section</th>
         <th style="min-width: 170px;">Morning</th>
         <th style="min-width: 170px;">Afternoon</th>
-        <th style="min-width: 320px;">Status</th>
+        <th style="min-width: 220px;">Status</th>
       </tr>
     </thead>
     <tbody id="attendance-rows">
@@ -104,15 +104,13 @@
             </td>
           <% }); %>
           <td>
-            <div class="btn-group btn-group-sm status-group" role="group">
-              <% ['present', 'late', 'excused', 'absent'].forEach(function(st) { %>
-                <button type="button"
-                        class="btn btn-outline-secondary status-btn <%= currentStatus === st ? 'active' : '' %>"
-                        data-status="<%= st %>">
-                  <%= st %>
-                </button>
-              <% }); %>
-            </div>
+            <span class="badge status-badge bg-secondary">
+              <%= currentStatus || 'unmarked' %>
+            </span>
+            <button type="button"
+                    class="btn btn-sm excuse-btn <%= currentStatus === 'excused' ? 'btn-info' : 'btn-outline-info' %>">
+              <%= currentStatus === 'excused' ? 'Un-excuse' : 'Excuse' %>
+            </button>
           </td>
         </tr>
       <% }); %>

@@ -5,7 +5,7 @@ const { requireRole } = require('../middleware/auth');
 const { getSummary, listEntries, buildBudgetCsv } = require('../services/budget');
 const { getFilterOptions, buildStudentWhere } = require('../services/students');
 const { listFines, getFineSummary, markPaid, markUnpaid, buildFinesCsv } = require('../services/fines');
-const { markStudentAttendance, markAttendanceTime } = require('../services/attendanceMarking');
+const { markStudentAttendance, markAttendanceTime, finalizeAttendanceForRoster } = require('../services/attendanceMarking');
 const { getFilterOptions: getFacultyFilterOptions, buildFacultyWhere } = require('../services/faculty');
 const { formatTimeOfDay, formatClockTime } = require('../services/timeOfDay');
 
@@ -28,15 +28,26 @@ router.get('/events/:id/attendance', async (req, res) => {
   const yearLevel = (req.query.yearLevel || '').trim();
   const section = (req.query.section || '').trim();
 
-  const [students, filterOptions, checks] = await Promise.all([
+  const [students, filterOptions] = await Promise.all([
     prisma.student.findMany({
       where: buildStudentWhere({ q, course, yearLevel, section }),
       orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
       take: 500,
     }),
     getFilterOptions(),
-    prisma.attendanceCheck.findMany({ where: { eventId, officerRole } }),
   ]);
+
+  const requiresThisOrg = officerRole === 'ssg' ? event.requiresSsg : event.requiresNstp;
+  if (requiresThisOrg) {
+    await finalizeAttendanceForRoster({
+      event,
+      officerRole,
+      checkedById: req.session.user.id,
+      studentIds: students.map((s) => s.id),
+    });
+  }
+
+  const checks = await prisma.attendanceCheck.findMany({ where: { eventId, officerRole } });
   const checkByStudentId = new Map(checks.map((c) => [c.studentId, c]));
 
   res.render('officer/attendance', {
@@ -55,12 +66,17 @@ router.get('/events/:id/attendance', async (req, res) => {
   });
 });
 
+// Present/Late/Absent are derived automatically from recorded times; the only manual
+// override an officer can make here is Excused (or clearing it back to automatic).
 router.post('/events/:id/attendance/:studentId', async (req, res) => {
+  const status = req.body.status === 'excused' ? 'excused' : req.body.status === null ? null : undefined;
+  if (status === undefined) return res.status(400).json({ error: 'Only excused (or clearing it) can be set manually' });
+
   const result = await markStudentAttendance({
     eventId: Number(req.params.id),
     studentId: Number(req.params.studentId),
     officerRole: req.session.user.role,
-    status: req.body.status,
+    status,
     checkedById: req.session.user.id,
   });
   if (result.error === 'invalid_status') return res.status(400).json({ error: result.message });
@@ -82,6 +98,7 @@ router.post('/events/:id/attendance/:studentId/time', async (req, res) => {
   const { check } = result;
   res.json({
     ok: true,
+    status: check.status,
     timeInAm: check.timeInAm,
     timeOutAm: check.timeOutAm,
     timeInPm: check.timeInPm,
