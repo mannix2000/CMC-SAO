@@ -198,7 +198,11 @@ model AttendanceCheck {
   student      Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
   studentId    Int
   officerRole  Role
-  status       AttendanceStatus
+  status       AttendanceStatus?
+  timeInAm     DateTime?
+  timeOutAm    DateTime?
+  timeInPm     DateTime?
+  timeOutPm    DateTime?
   checkedBy    User              @relation("CheckedBy", fields: [checkedById], references: [id])
   checkedById  Int
   checkedAt    DateTime          @default(now()) @updatedAt

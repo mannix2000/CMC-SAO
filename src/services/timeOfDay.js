@@ -36,4 +36,14 @@ function parseTimeOfDay(value) {
   return new Date(`1970-01-01T${value}:00.000Z`);
 }
 
-module.exports = { buildTimeOptions, formatTimeOfDay, timeOfDayToValue, parseTimeOfDay };
+/**
+ * Formats an actual timestamp (e.g. an attendance check's recorded time-in/time-out)
+ * as a clock time, using the server's local time zone rather than the UTC-based
+ * convention above, which is reserved for the arbitrary-date @db.Time schedule fields.
+ */
+function formatClockTime(date) {
+  if (!date) return '';
+  return formatHm(date.getHours(), date.getMinutes());
+}
+
+module.exports = { buildTimeOptions, formatTimeOfDay, timeOfDayToValue, parseTimeOfDay, formatClockTime };

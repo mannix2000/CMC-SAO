@@ -59,5 +59,42 @@
     }
   });
 
+  function formatClockTime(isoString) {
+    if (!isoString) return '—';
+    return new Date(isoString).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  }
+
+  rows.addEventListener('change', async (e) => {
+    const select = e.target.closest('.session-select');
+    if (!select) return;
+    const type = select.value;
+    if (!type) return;
+
+    const row = select.closest('tr[data-row-id]');
+    const rowId = row.dataset.rowId;
+    const session = select.dataset.session;
+    const timesEl = row.querySelector(`.session-times[data-session="${session}"]`);
+
+    select.disabled = true;
+    try {
+      const res = await fetch(`${postUrlBase}/${rowId}/time`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session, type }),
+      });
+      if (!res.ok) throw new Error('Request failed');
+      const data = await res.json();
+      const inField = session === 'am' ? data.timeInAm : data.timeInPm;
+      const outField = session === 'am' ? data.timeOutAm : data.timeOutPm;
+      timesEl.querySelector('.time-in').textContent = formatClockTime(inField);
+      timesEl.querySelector('.time-out').textContent = formatClockTime(outField);
+    } catch (err) {
+      alert('Could not save the time. Please try again.');
+    } finally {
+      select.value = '';
+      select.disabled = false;
+    }
+  });
+
   updateSummary();
 })();

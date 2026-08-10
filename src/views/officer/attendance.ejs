@@ -70,15 +70,39 @@
 <div class="table-responsive">
   <table class="table table-sm table-striped bg-white align-middle">
     <thead>
-      <tr><th>Student #</th><th>Name</th><th>Course / Section</th><th style="min-width: 320px;">Status</th></tr>
+      <tr>
+        <th>Student #</th>
+        <th>Name</th>
+        <th>Course / Section</th>
+        <th style="min-width: 170px;">Morning</th>
+        <th style="min-width: 170px;">Afternoon</th>
+        <th style="min-width: 320px;">Status</th>
+      </tr>
     </thead>
     <tbody id="attendance-rows">
       <% students.forEach(function(s) { %>
-        <% const currentStatus = statusByStudentId.get(s.id) || ''; %>
+        <% const check = checkByStudentId.get(s.id) || {}; %>
+        <% const currentStatus = check.status || ''; %>
         <tr data-row-id="<%= s.id %>" data-status="<%= currentStatus %>">
           <td><%= s.studentNumber %></td>
           <td><%= s.lastName %>, <%= s.firstName %></td>
           <td><%= s.course %> / <%= s.section %></td>
+          <% ['am', 'pm'].forEach(function(session) { %>
+            <% const inField = session === 'am' ? 'timeInAm' : 'timeInPm'; %>
+            <% const outField = session === 'am' ? 'timeOutAm' : 'timeOutPm'; %>
+            <td>
+              <div class="small text-muted mb-1 session-times" data-session="<%= session %>">
+                In: <span class="time-in"><%= check[inField] ? formatClockTime(check[inField]) : '—' %></span>
+                &middot;
+                Out: <span class="time-out"><%= check[outField] ? formatClockTime(check[outField]) : '—' %></span>
+              </div>
+              <select class="form-select form-select-sm session-select" data-session="<%= session %>">
+                <option value="" selected>Time In / Out</option>
+                <option value="in">Time In</option>
+                <option value="out">Time Out</option>
+              </select>
+            </td>
+          <% }); %>
           <td>
             <div class="btn-group btn-group-sm status-group" role="group">
               <% ['present', 'late', 'excused', 'absent'].forEach(function(st) { %>
@@ -93,7 +117,7 @@
         </tr>
       <% }); %>
       <% if (students.length === 0) { %>
-        <tr><td colspan="4" class="text-center text-muted">No students found.</td></tr>
+        <tr><td colspan="6" class="text-center text-muted">No students found.</td></tr>
       <% } %>
     </tbody>
   </table>

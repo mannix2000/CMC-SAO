@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const prisma = require('../config/db');
 const { requireApiAuth, requireApiRole } = require('../middleware/apiAuth');
 const { getFilterOptions, buildStudentWhere } = require('../services/students');
-const { markStudentAttendance } = require('../services/attendanceMarking');
+const { markStudentAttendance, markAttendanceTime } = require('../services/attendanceMarking');
 
 const router = express.Router();
 
@@ -93,11 +93,21 @@ router.get('/events/:id/attendance', async (req, res) => {
     }),
     prisma.attendanceCheck.findMany({ where: { eventId, officerRole } }),
   ]);
-  const statusByStudentId = new Map(checks.map((c) => [c.studentId, c.status]));
+  const checkByStudentId = new Map(checks.map((c) => [c.studentId, c]));
 
   res.json({
     event,
-    students: students.map((s) => ({ ...s, status: statusByStudentId.get(s.id) || null })),
+    students: students.map((s) => {
+      const check = checkByStudentId.get(s.id);
+      return {
+        ...s,
+        status: check?.status || null,
+        timeInAm: check?.timeInAm || null,
+        timeOutAm: check?.timeOutAm || null,
+        timeInPm: check?.timeInPm || null,
+        timeOutPm: check?.timeOutPm || null,
+      };
+    }),
   });
 });
 
@@ -113,6 +123,29 @@ router.post('/events/:id/attendance/:studentId', async (req, res) => {
   if (result.error === 'invalid_status') return res.status(400).json({ error: result.message });
   if (result.error === 'not_found') return res.status(404).json({ error: result.message });
   res.json({ ok: true, status: result.check.status });
+});
+
+// POST /api/events/:id/attendance/:studentId/time  { session: "am" | "pm", type: "in" | "out" }
+// Stamps the current server time for that session's In/Out slot.
+router.post('/events/:id/attendance/:studentId/time', async (req, res) => {
+  const result = await markAttendanceTime({
+    eventId: Number(req.params.id),
+    studentId: Number(req.params.studentId),
+    officerRole: req.apiUser.role,
+    session: req.body.session,
+    type: req.body.type,
+    checkedById: req.apiUser.id,
+  });
+  if (result.error === 'invalid_time_slot') return res.status(400).json({ error: result.message });
+  if (result.error === 'not_found') return res.status(404).json({ error: result.message });
+  const { check } = result;
+  res.json({
+    ok: true,
+    timeInAm: check.timeInAm,
+    timeOutAm: check.timeOutAm,
+    timeInPm: check.timeInPm,
+    timeOutPm: check.timeOutPm,
+  });
 });
 
 module.exports = router;

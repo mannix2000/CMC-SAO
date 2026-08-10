@@ -5,9 +5,9 @@ const { requireRole } = require('../middleware/auth');
 const { getSummary, listEntries, buildBudgetCsv } = require('../services/budget');
 const { getFilterOptions, buildStudentWhere } = require('../services/students');
 const { listFines, getFineSummary, markPaid, markUnpaid, buildFinesCsv } = require('../services/fines');
-const { markStudentAttendance } = require('../services/attendanceMarking');
+const { markStudentAttendance, markAttendanceTime } = require('../services/attendanceMarking');
 const { getFilterOptions: getFacultyFilterOptions, buildFacultyWhere } = require('../services/faculty');
-const { formatTimeOfDay } = require('../services/timeOfDay');
+const { formatTimeOfDay, formatClockTime } = require('../services/timeOfDay');
 
 const router = express.Router();
 router.use(requireRole('ssg', 'nstp'));
@@ -37,13 +37,13 @@ router.get('/events/:id/attendance', async (req, res) => {
     getFilterOptions(),
     prisma.attendanceCheck.findMany({ where: { eventId, officerRole } }),
   ]);
-  const statusByStudentId = new Map(checks.map((c) => [c.studentId, c.status]));
+  const checkByStudentId = new Map(checks.map((c) => [c.studentId, c]));
 
   res.render('officer/attendance', {
     title: `Attendance: ${event.name}`,
     event,
     students,
-    statusByStudentId,
+    checkByStudentId,
     q,
     course,
     yearLevel,
@@ -51,6 +51,7 @@ router.get('/events/:id/attendance', async (req, res) => {
     filterOptions,
     officerRole,
     formatTimeOfDay,
+    formatClockTime,
   });
 });
 
@@ -65,6 +66,27 @@ router.post('/events/:id/attendance/:studentId', async (req, res) => {
   if (result.error === 'invalid_status') return res.status(400).json({ error: result.message });
   if (result.error === 'not_found') return res.status(404).json({ error: result.message });
   res.json({ ok: true, status: result.check.status });
+});
+
+router.post('/events/:id/attendance/:studentId/time', async (req, res) => {
+  const result = await markAttendanceTime({
+    eventId: Number(req.params.id),
+    studentId: Number(req.params.studentId),
+    officerRole: req.session.user.role,
+    session: req.body.session,
+    type: req.body.type,
+    checkedById: req.session.user.id,
+  });
+  if (result.error === 'invalid_time_slot') return res.status(400).json({ error: result.message });
+  if (result.error === 'not_found') return res.status(404).json({ error: result.message });
+  const { check } = result;
+  res.json({
+    ok: true,
+    timeInAm: check.timeInAm,
+    timeOutAm: check.timeOutAm,
+    timeInPm: check.timeInPm,
+    timeOutPm: check.timeOutPm,
+  });
 });
 
 // ---------- Faculty & Staff Attendance (NSTP only) ----------
