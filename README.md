@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # CMC SAO Attendance System
 
 Node.js + Express + PostgreSQL attendance system for flag ceremonies and school events.
@@ -77,3 +78,6 @@ This currently covers roster + attendance marking only. If the mobile app later 
 - Sessions are stored in Postgres itself (via `connect-pg-simple`), so no separate session store is needed.
 - Roster files are parsed in memory (5MB limit) and never written to disk.
 - There is no public sign-up; only an admin can create SSG/NSTP/admin accounts.
+=======
+# CMC-SAO
+>>>>>>> 7702a3c916b802596840f8ccd76393056a55f069
